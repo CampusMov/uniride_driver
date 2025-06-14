@@ -36,6 +36,7 @@ Este proyecto utiliza las siguientes dependencias principales:
 *   `http`: Para realizar peticiones HTTP.
 *   `path`: Utilidades para trabajar con rutas de archivos y directorios.
 *   `sqflite`: Para el uso de bases de datos SQLite.
+*   `google_maps_flutter`: Para la integración de Google Maps.
 
 ## Contribuir
 
