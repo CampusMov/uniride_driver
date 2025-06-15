@@ -14,6 +14,9 @@ dependencies:
   path: ^1.9.1
   sqflite: ^2.4.2
   google_maps_flutter: ^2.12.2
+  location: ^5.0.0
+  flutter_polyline_points: ^2.1.0
+  flutter_sliding_up_panel: ^2.1.1
 
 dev_dependencies:
   flutter_test:
