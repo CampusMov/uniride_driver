@@ -22,4 +22,6 @@ class UserDto {
         email: email,
         role: UserRoleExtension.fromString(role),
       );
+
+  toJson() {}
 }
