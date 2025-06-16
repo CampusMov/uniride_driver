@@ -36,55 +36,75 @@ class WelcomeScreen extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
-              // Botones centrados y de igual tamaño
-              Center(
-                child: Column(
-                  children: [
-                    _buildOptionButton(context, 'Información personal', const PersonalInfoScreen()),
-                    _buildOptionButton(context, 'Información de contacto', const ContactInfoScreen()),
-                    _buildOptionButton(context, 'Información académica', const AcademicInfoScreen()),
-                    _buildOptionButton(context, 'Información del vehículo', const VehicleInfoScreen()),
-                    _buildOptionButton(context, 'Términos y condiciones', const TermsAndConditionsScreen()),
-                  ],
-                ),
-              ),
+              _buildOptionItem(context, 'Información personal', const PersonalInfoScreen()),
+              _buildOptionItem(context, 'Información de contacto', const ContactInfoScreen()),
+              _buildOptionItem(context, 'Información académica', const AcademicInfoScreen()),
+              _buildOptionItem(context, 'Información del vehículo', const VehicleInfoScreen()),
+              _buildOptionItem(context, 'Términos y condiciones', const TermsAndConditionsScreen()),
+              const SizedBox(height: 100), 
             ],
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: () {
+              
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '¡Comenzar!',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOptionButton(BuildContext context, String text, Widget destinationScreen) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+  Widget _buildOptionItem(BuildContext context, String text, Widget destinationScreen) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => destinationScreen),
+        );
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+              ],
             ),
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => destinationScreen),
-            );
-          },
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
+          const Divider(color: Colors.white, thickness: 0.75),
+        ],
       ),
     );
   }
