@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:flutter/material.dart'; // Reemplazado dart:ui
 
 import 'package:uniride_driver/core/theme/color_paletter.dart';
 
