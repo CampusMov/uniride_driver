@@ -90,16 +90,17 @@ class _NameInputScreenState extends State<NameInputScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-  final fullName = '${_nameController.text} ${_lastNameController.text}'.trim();
-  if (fullName.isNotEmpty) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WelcomeScreen(name: _nameController.text),
-      ),
-    );
-  }
-},
+          final fullName = '${_nameController.text} ${_lastNameController.text}'
+              .trim();
+          if (fullName.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WelcomeScreen(name: _nameController.text),
+              ),
+            );
+          }
+        },
         backgroundColor: Colors.white,
         label: Row(
           children: const [

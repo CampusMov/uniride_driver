@@ -109,7 +109,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                       : null,
                   child: _croppedFile == null
                       ? const Icon(
-                          Icons.camera_alt_outlined,
+                          Icons.person,
                           size: 50,
                           color: Colors.grey,
                         )
