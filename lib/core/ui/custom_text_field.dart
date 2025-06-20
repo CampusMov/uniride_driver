@@ -9,15 +9,21 @@ class CustomTextField extends StatelessWidget {
     this.icon,
     this.hintText,
     this.editingController,
+    this.onChanged,
+    this.onSubmitted
   });
   final Icon? icon;
   final String? hintText;
   final TextEditingController? editingController;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: editingController,
+      onChanged: onChanged,
+      onSubmitted:  onSubmitted,
       cursorColor: ColorPaletter.textinputField,
       style: TextStylePaletter.inputField,
       decoration: InputDecoration(

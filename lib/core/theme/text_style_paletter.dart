@@ -62,7 +62,7 @@ class TextStylePaletter {
   //Estilo para los textos de las opciones de busqueda como horarios
   static final TextStyle subTextOptions = TextStyle(
     fontSize: 16,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     color: ColorPaletter.textPrimary,
   );
 
