@@ -20,21 +20,23 @@ class ImageCropScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Alineación izquierda general
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Encabezado con botón de retroceso y título
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 28,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'Recorta tu imagen',
                     style: TextStyle(
                       color: Colors.white,
@@ -46,7 +48,6 @@ class ImageCropScreen extends StatelessWidget {
               ),
             ),
 
-            // Widget de recorte de imagen
             Expanded(
               child: Crop(
                 controller: controller,
