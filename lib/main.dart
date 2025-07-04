@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:uniride_driver/features/auth/presentation/pages/code_verification_page.dart';
+import 'package:uniride_driver/features/auth/presentation/pages/enter_institutional_email_page.dart';
+import 'package:uniride_driver/features/onboarding/presentation/pages/splash_screen.dart';
 
-void main() {
+import 'core/di/injection_container.dart' as di;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize dependencies
+  await di.init();
+
   runApp(const MainApp());
 }
 
@@ -11,9 +19,13 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home:CodeVerificationPage(),
-      
-    );
+        title: 'UniRide',
+        theme: ThemeData(
+        primarySwatch: Colors.blue,
+    ),
+    home: const SplashScreen(),
+    routes: {
+      '/enter-verification-code': (context) => const EnterInstitutionalEmailPage(),
+    });
   }
 }
