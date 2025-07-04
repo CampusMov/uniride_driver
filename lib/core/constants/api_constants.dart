@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl = 'https://api.uniride.com';
-  static const String googleMapApiKey = '';
+  static const String googleMapApiKey = 'AIzaSyAGvkVnVl-JI1b-0pkAey10EFFVJXF1Gbs';
   static const String googleMapSearchLocation = 'https://maps.googleapis.com/maps/api/place/autocomplete';
 
 
