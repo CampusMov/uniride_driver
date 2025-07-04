@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/enter_institutional_email_page.dart';
+import 'package:uniride_driver/features/auth/presentation/pages/verification_code_page.dart';
 import 'package:uniride_driver/features/onboarding/presentation/pages/splash_screen.dart';
+import 'package:uniride_driver/features/onboarding/presentation/pages/welcome_view.dart';
 
 import 'core/di/injection_container.dart' as di;
 
@@ -23,9 +26,13 @@ class MainApp extends StatelessWidget {
         theme: ThemeData(
         primarySwatch: Colors.blue,
     ),
-    home: const SplashScreen(),
+    initialRoute: ScreensRoutes.home,
     routes: {
-      '/enter-verification-code': (context) => const EnterInstitutionalEmailPage(),
+      ScreensRoutes.home : (context) => const SplashScreen(),
+      ScreensRoutes.welcome : (context) => const WelcomeView(),
+      ScreensRoutes.enterInstitutionalEmail : (context) => const EnterInstitutionalEmailPage(),
+      ScreensRoutes.enterVerificationCode : (context) => const VerificationCodePage(),
+      //TODO: ScreensRoutes.registerProfile : (context) => const RegisterProfilePage(),
     });
   }
 }

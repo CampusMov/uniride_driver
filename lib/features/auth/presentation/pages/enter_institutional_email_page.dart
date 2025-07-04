@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/auth/domain/repositories/auth_repository.dart';
 import 'package:uniride_driver/features/auth/domain/repositories/user_repository.dart';
 import 'package:uniride_driver/features/auth/presentation/blocs/institutional_email_bloc.dart';
@@ -33,7 +34,7 @@ class EnterInstitutionalEmailView extends StatelessWidget {
     return BlocListener<InstitutionalEmailBloc, InstitutionalEmailState>(
       listener: (context, state) {
         if (state.isEmailSent) {
-          Navigator.pushNamed(context, '/enter-verification-code');
+          Navigator.pushNamed(context, ScreensRoutes.enterVerificationCode);
         }
         if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
