@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/features/auth/domain/entities/role.dart';
 import 'package:uniride_driver/features/auth/domain/entities/user.dart';
 import 'package:uniride_driver/features/auth/presentation/blocs/verification_code_event.dart';
 import 'package:uniride_driver/features/auth/presentation/blocs/verification_code_state.dart';
@@ -59,13 +60,17 @@ class VerificationCodeBloc extends Bloc<VerificationCodeEvent, VerificationCodeS
       final result = await authRepository.verifyCode(
         email: state.user?.email ?? '',
         code: state.code,
-        role: 'driver',
+        role: Role.driver.value,
       );
+
+      log('TAG: VerificationCodeBloc: Verification result: $result');
 
       switch (result) {
         case Success<AuthVerificationCodeResponse>():
           await _deleteAllUsersLocally();
           await _insertUserLocally(result.data.toDomain());
+
+          log('TAG: VerificationCodeBloc: User verified and saved locally: ${result.data.toDomain().email}');
 
           emit(state.copyWith(
             isLoading: false,
@@ -76,6 +81,9 @@ class VerificationCodeBloc extends Bloc<VerificationCodeEvent, VerificationCodeS
           break;
 
         case Failure<AuthVerificationCodeResponse>():
+
+          log('TAG: VerificationCodeBloc: Verification failed with error: ${result.message}');
+
           emit(state.copyWith(
             isLoading: false,
             isButtonAvailable: true,
