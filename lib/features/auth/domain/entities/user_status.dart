@@ -1,31 +1,46 @@
 enum UserStatus {
-  // ignore: constant_identifier_names
-  NOT_VERIFIED,
-  // ignore: constant_identifier_names
-  VERIFIED,
-  // ignore: constant_identifier_names
-  ACTIVE,
-  // ignore: constant_identifier_names
-  BLOCKED,
-  // ignore: constant_identifier_names
-  DELETED,
+  notVerified('NOT_VERIFIED'),
+  verified('VERIFIED'),
+  active('ACTIVE'),
+  blocked('BLOCKED'),
+  deleted('DELETED');
+
+  const UserStatus(this.value);
+  final String value;
+
+  static UserStatus fromString(String value) {
+    switch (value.toLowerCase()) {
+      case 'not_verified':
+        return UserStatus.notVerified;
+      case 'verified':
+        return UserStatus.verified;
+      case 'active':
+        return UserStatus.active;
+      case 'blocked':
+        return UserStatus.blocked;
+      case 'deleted':
+        return UserStatus.deleted;
+      default:
+        return UserStatus.notVerified;
+    }
+  }
 }
 
 extension UserStatusExtension on UserStatus {
   static UserStatus fromString(String value) {
     switch (value.toLowerCase()) {
       case 'not_verified':
-        return UserStatus.NOT_VERIFIED;
+        return UserStatus.notVerified;
       case 'verified':
-        return UserStatus.VERIFIED;
+        return UserStatus.verified;
       case 'active':
-        return UserStatus.ACTIVE;
+        return UserStatus.active;
       case 'blocked':
-        return UserStatus.BLOCKED;
+        return UserStatus.blocked;
       case 'deleted':
-        return UserStatus.DELETED;
+        return UserStatus.deleted;
       default:
-        return UserStatus.NOT_VERIFIED;
+        return UserStatus.notVerified;
     }
   }
 }
