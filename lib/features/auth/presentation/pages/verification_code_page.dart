@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/core/navigation/screens_routes.dart';
 
 import '../../../../core/di/injection_container.dart' as di;
 import '../../../shared/utils/widgets/default_rounded_text_button.dart';
+import '../../../shared/utils/widgets/opt_text_field.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../blocs/verification_code_bloc.dart';
@@ -24,15 +28,57 @@ class VerificationCodePage extends StatelessWidget {
   }
 }
 
-class _VerificationCodeView extends StatelessWidget {
+class _VerificationCodeView extends StatefulWidget {
   const _VerificationCodeView();
+
+  @override
+  State<_VerificationCodeView> createState() => _VerificationCodeViewState();
+}
+
+class _VerificationCodeViewState extends State<_VerificationCodeView> {
+  Timer? _timer;
+  int _secondsLeft = 150;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    setState(() {
+      _secondsLeft = 150;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsLeft == 0) {
+        timer.cancel();
+      } else {
+        setState(() {
+          _secondsLeft--;
+        });
+      }
+    });
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = (seconds ~/ 60).toString().padLeft(1, '0');
+    final secs = (seconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$secs';
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<VerificationCodeBloc, VerificationCodeState>(
       listener: (context, state) {
         if (state.isVerificationSuccess) {
-          Navigator.of(context).pushReplacementNamed('/profile');
+          Navigator.of(context).pushReplacementNamed(ScreensRoutes.registerProfile);
         }
       },
       child: Scaffold(
@@ -119,7 +165,20 @@ class _VerificationCodeView extends StatelessWidget {
                                   ),
                                 )
                               else
-                                _buildOtpInput(context, state.code),
+                                OtpTextField(
+                                  otpText: state.code,
+                                  otpCount: 6,
+                                  onOtpTextChange: (value, isComplete) {
+                                    context.read<VerificationCodeBloc>().add(
+                                      CodeInputChanged(value),
+                                    );
+                                    if (isComplete) {
+                                      context.read<VerificationCodeBloc>().add(
+                                        const SendVerificationCode(),
+                                      );
+                                    }
+                                  },
+                                ),
 
                               // Error message
                               if (state.isMessageErrorVisible && !state.isLoading)
@@ -137,11 +196,11 @@ class _VerificationCodeView extends StatelessWidget {
                                 ),
 
                               // Countdown message
-                              if (state.secondsLeftToResendCode > 0 && !state.isLoading)
+                              if (_secondsLeft > 0 && !state.isLoading)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 20.0),
                                   child: Text(
-                                    'Puedes reenviar el código en ${state.secondsLeftToResendCode} segundos',
+                                    'Puedes reenviar el código en ${_formatTime(_secondsLeft)}',
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 14,
@@ -158,13 +217,14 @@ class _VerificationCodeView extends StatelessWidget {
                       // Resend button
                       BlocBuilder<VerificationCodeBloc, VerificationCodeState>(
                         builder: (context, state) {
-                          if (state.isButtonAvailable && !state.isLoading) {
+                          if (_secondsLeft == 0 && !state.isLoading) {
                             return DefaultRoundedTextButton(
                               text: 'Reenviar código',
                               onPressed: () {
                                 context.read<VerificationCodeBloc>().add(
                                   const ResendVerificationEmail(),
                                 );
+                                _startTimer();
                               },
                             );
                           }
@@ -177,41 +237,6 @@ class _VerificationCodeView extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOtpInput(BuildContext context, String currentValue) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF3F4042),
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: TextField(
-        controller: TextEditingController(text: currentValue),
-        onChanged: (value) {
-          context.read<VerificationCodeBloc>().add(
-            CodeInputChanged(value),
-          );
-        },
-        keyboardType: TextInputType.number,
-        maxLength: 6,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          letterSpacing: 8,
-        ),
-        decoration: const InputDecoration(
-          hintText: '000000',
-          hintStyle: TextStyle(
-            color: Color(0xFFB3B3B3),
-            letterSpacing: 8,
-          ),
-          border: InputBorder.none,
-          counterText: '',
         ),
       ),
     );
