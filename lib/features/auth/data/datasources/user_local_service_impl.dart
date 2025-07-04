@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:uniride_driver/features/auth/data/models/user_model.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
@@ -14,7 +16,7 @@ class UserLocalServiceImpl implements UserLocalService {
     final db = await databaseHelper.database;
 
     await db.delete(DatabaseHelper.usersTable);
-    print('All users deleted from local database');
+    log('All users deleted from local database');
   }
 
   @override
@@ -23,8 +25,6 @@ class UserLocalServiceImpl implements UserLocalService {
 
     final List<Map<String, dynamic>> maps = await db.query(
       DatabaseHelper.usersTable,
-      limit: 1,
-      orderBy: 'created_at DESC',
     );
 
     if (maps.isNotEmpty) {
@@ -44,6 +44,6 @@ class UserLocalServiceImpl implements UserLocalService {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    print('User saved locally: ${user.email}');
+    log('User saved locally: ${user.email}');
   }
 }

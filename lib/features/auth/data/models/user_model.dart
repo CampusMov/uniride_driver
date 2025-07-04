@@ -15,7 +15,7 @@ class UserModel extends User {
       id: json['id'] ?? '1',
       email: json['email'] ?? '',
       status: UserStatus.fromString(json['status'] ?? 'NOT_VERIFIED'),
-      roles: json['rol'] ?? [Role.fromString('DRIVER')],
+      roles: List.of([Role.fromString(json['rol'])]),
     );
   }
 
