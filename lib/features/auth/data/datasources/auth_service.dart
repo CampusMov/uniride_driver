@@ -1,47 +1,55 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:http/http.dart' as http;
-import 'package:uniride_driver/core/constants/api_constants.dart';
-import 'package:uniride_driver/features/auth/data/models/auth_verification_response.dart';
+import 'package:uniride_driver/features/auth/data/models/auth_verification_code_response_model.dart';
 
-class AuthService {
-  final String baseUrl = ApiConstants.baseUrl;
+import '../../domain/services/auth_service.dart';
 
+class AuthServiceImpl implements AuthService {
+  final http.Client client;
+  final String baseUrl;
+
+  AuthServiceImpl({
+    required this.client,
+    required this.baseUrl,
+  });
+
+  @override
   Future<void> sendVerificationEmail(String email) async {
-    final uri = Uri.parse('$baseUrl/auth/institutional-email-verification');
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {'email': email},
+    final uri = Uri
+        .parse('$baseUrl/auth/institutional-email-verification')
+        .replace(
+      queryParameters: {'email': email},
     );
 
-    if (response.statusCode != HttpStatus.ok) {
-      throw Exception('Error al enviar email: ${response.body}');
+    final response = await client.post(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al enviar el correo de verificación');
     }
   }
 
-  Future<AuthVerificationResponseDto> sendVerificationCode({
-    required String email,
-    required String verificationCode,
-    required String role,
-  }) async {
-    final uri = Uri.parse('$baseUrl/auth/code-verification');
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: {
+  @override
+  Future<AuthVerificationCodeResponseModel> sendVerificationCode(
+      String email,
+      String code,
+      String role,
+      ) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/auth/verify-code'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'email': email,
-        'verificationCode': verificationCode,
+        'code': code,
         'role': role,
-      },
+      }),
     );
 
-    if (response.statusCode == HttpStatus.ok) {
-      final json = jsonDecode(response.body);
-      return AuthVerificationResponseDto.fromJson(json);
+    if (response.statusCode == 200) {
+      return AuthVerificationCodeResponseModel.fromJson(
+        jsonDecode(response.body),
+      );
     } else {
-      throw Exception(jsonDecode(response.body)['message']);
+      throw Exception('Error al verificar el código');
     }
   }
 }
