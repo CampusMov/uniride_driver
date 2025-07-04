@@ -4,20 +4,33 @@ publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.8.1
+   sdk: ^3.8.1
 
 dependencies:
-  flutter:
-    sdk: flutter
-  flutter_bloc: ^9.1.1
-  http: ^1.4.0
-  path: ^1.9.1
-  sqflite: ^2.4.2
+    flutter:
+       sdk: flutter
+    get_it: ^8.0.3
+    flutter_bloc: ^9.1.1
+    http: ^1.4.0
+    path: ^1.9.1
+    sqflite: ^2.4.2
+    equatable: ^2.0.5
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^5.0.0
+    flutter_test:
+        sdk: flutter
+    flutter_lints: ^5.0.0
+    flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/login_logo.png
+    - assets/images/logo.png
+    - assets/images/start_image.png
+
+flutter_native_splash:
+    color: "#000000"
+    image: assets/images/login_logo.png
+    android: true
+    ios: true
