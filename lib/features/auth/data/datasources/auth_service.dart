@@ -29,20 +29,16 @@ class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<AuthVerificationCodeResponseModel> sendVerificationCode(
-      String email,
-      String code,
-      String role,
-      ) async {
-    final response = await client.post(
-      Uri.parse('$baseUrl/auth/verify-code'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+  Future<AuthVerificationCodeResponseModel> sendVerificationCode(String email, String code, String role) async {
+    final uri = Uri.parse('$baseUrl/auth/code-verification').replace(
+      queryParameters: {
         'email': email,
-        'code': code,
+        'verificationCode': code,
         'role': role,
-      }),
+      },
     );
+
+    final response = await client.post(uri);
 
     if (response.statusCode == 200) {
       return AuthVerificationCodeResponseModel.fromJson(
