@@ -38,6 +38,7 @@ class LocationRepository {
       return Prediction(
         placeId: prediction.placeId,
         description: prediction.description,
+        isFavorite: false, 
       );
     }).toList();
   }

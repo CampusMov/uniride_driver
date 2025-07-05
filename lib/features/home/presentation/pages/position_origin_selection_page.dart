@@ -4,6 +4,9 @@ import 'package:uniride_driver/core/theme/color_paletter.dart';
 import 'package:uniride_driver/core/theme/text_style_paletter.dart';
 import 'package:uniride_driver/core/ui/custom_text_field.dart';
 import 'package:uniride_driver/features/home/domain/entities/location_favorite.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_event.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_state.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_event.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_state.dart';
@@ -12,10 +15,6 @@ import 'package:uniride_driver/features/home/presentation/widgets/place_predicti
 class PositionSelectionPageOrigin extends StatefulWidget {
   const PositionSelectionPageOrigin({super.key,required this.onTap});
 
-  //Si es verdadero, se selecciona la ubicacion de partida
-  //Si es falso, se selecciona la ubicacion de destino
-
-  
   
   final VoidCallback onTap;
   
@@ -27,32 +26,22 @@ class _PositionSelectionPageOriginState extends State<PositionSelectionPageOrigi
   final List<LocationFavorite> _locationsFavorites = [ ];
   final TextEditingController _searchController = TextEditingController();
 
+  
+
   @override
   void initState() {
-    
-    _locationsFavorites.add(
-      LocationFavorite(
-        nameLocation: "Casa",
-        isFavorite: true,
-        address: "Calle Falsa 123",
-      ),
-    );
-
-    _locationsFavorites.add(
-      LocationFavorite(
-        nameLocation: "Casa",
-        isFavorite: false,
-        address: "Calle Falsa 123",
-      ),
-    );
+    context.read<FavoritesBloc>().add(InitialFavorites());
     super.initState();
   }
+
+ 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [ 
@@ -118,12 +107,33 @@ class _PositionSelectionPageOriginState extends State<PositionSelectionPageOrigi
          ],
        ),
        SizedBox(height: 10),
-    
-       //LocationFavoriteListView(locations: _locationsFavorites)
+
+        // Lista de ubicaciones favoritas
+        BlocBuilder<FavoritesBloc,FavoritesState>(
+          builder: (context,state){
+            if (state is InitialState ) {
+              return Text("No hay ubicaciones guardadas",style: TextStylePaletter.welcomeSubTitle);
+              
+            }else if(state is LoadingState){
+              return Center(
+                    child: CircularProgressIndicator(
+                      color: ColorPaletter.background,
+                    ),
+                );
+            
+            } else if(state is LoadedState ){
+              return PlacePredictionsListView(
+                predictions: state.predictions, isMode: true,);
+            }
+            return Text("Esperando ubicación...");
+            
+          }),
+       
         
     
        
       ],
+    ),
     );
   }
 }

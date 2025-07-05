@@ -42,8 +42,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       //Menu de la aplicacion
-    
-     
+
       body: Stack( 
         children: [
            BlocBuilder<MapBloc,MapState>(
@@ -80,7 +79,7 @@ class _HomePageState extends State<HomePage> {
 
           
           
-           
+           // Panel deslizante
           SlidingUpPanelWidget(
             controlHeight: _controlHeight, 
             anchor: 0.4, 

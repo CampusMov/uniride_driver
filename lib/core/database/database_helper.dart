@@ -7,6 +7,7 @@ class DatabaseHelper {
 
   // Table names
   static const String usersTable = 'users';
+  static const String placeFavoritesTable = 'places_favorites';
 
   // Singleton pattern
   DatabaseHelper._privateConstructor();
@@ -42,6 +43,16 @@ class DatabaseHelper {
         rol TEXT
       )
     ''');
+    
+    // Create place_favorites table
+    await db.execute('''
+      CREATE TABLE $placeFavoritesTable (
+        place_id TEXT NOT NULL,
+        address TEXT NOT NULL,
+        isfavorite INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    
     print('Database tables created successfully');
   }
 

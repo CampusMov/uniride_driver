@@ -8,6 +8,8 @@ import 'package:uniride_driver/features/home/data/model/place_dto.dart';
 import 'package:uniride_driver/features/home/data/model/place_prediction_dto.dart';
 
 class LocationService {
+  
+  //Encargado de las predicciones de lugares y direcciones
   Future<List<PredictionDto>> searchLocation(String query) async {
     final Uri uri = Uri.parse(
       '${ApiConstants.googleMapSearchLocation}/json?input=${query}&key=${ApiConstants.googleMapApiKey}',
