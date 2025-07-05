@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../domain/entities/enum_gender.dart';
 import '../../domain/entities/profile.dart';
 import 'class_schedule_request_model.dart';
@@ -46,7 +48,7 @@ class ProfileRequestModel {
       phoneNumber: profile.phoneNumber,
       firstName: profile.firstName,
       lastName: profile.lastName,
-      birthDate: profile.birthDate ?? DateTime.now().toIso8601String(),
+      birthDate: profile.birthDate != null  ? DateFormat('yyyy-MM-dd').format(DateTime.parse(profile.birthDate!)): DateFormat('yyyy-MM-dd').format(DateTime.now()),
       gender: profile.gender,
       profilePictureUrl: profile.profilePictureUrl,
       university: profile.university,
