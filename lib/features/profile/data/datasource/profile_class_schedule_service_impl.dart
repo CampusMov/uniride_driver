@@ -17,7 +17,7 @@ class ProfileClassScheduleServiceImpl implements ProfileClassScheduleService {
 
   @override
   Future<List<ClassScheduleResponseModel>> getClassSchedulesByProfileId(String profileId) async {
-    final uri = Uri.parse('$baseUrl/profile-service/profiles/$profileId/class-schedules');
+    final uri = Uri.parse('$baseUrl/profiles/$profileId/class-schedules');
 
     final response = await client.get(uri);
 

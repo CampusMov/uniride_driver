@@ -18,7 +18,7 @@ class ProfileServiceImpl implements ProfileService {
 
   @override
   Future<void> saveProfile(ProfileRequestModel profileRequest) async {
-    final uri = Uri.parse('$baseUrl/profile-service/profiles');
+    final uri = Uri.parse('$baseUrl/profiles');
 
     final response = await client.post(
       uri,
@@ -34,7 +34,7 @@ class ProfileServiceImpl implements ProfileService {
 
   @override
   Future<ProfileResponseModel> getProfileById(String profileId) async {
-    final uri = Uri.parse('$baseUrl/profile-service/profiles/$profileId');
+    final uri = Uri.parse('$baseUrl/profiles/$profileId');
 
     final response = await client.get(uri);
 
