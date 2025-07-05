@@ -12,6 +12,10 @@ import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
 
+import '../../features/file/data/datasources/file_management_service_impl.dart';
+import '../../features/file/data/repositories/file_management_repository_impl.dart';
+import '../../features/file/domain/repositories/file_management_repository.dart';
+import '../../features/file/domain/services/file_management_service.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
 import '../../features/profile/data/repositories/profile_class_schedule_repository_impl.dart';
@@ -28,6 +32,17 @@ Future<void> init() async {
   //! Core - Database (PRIMERO)
   // ✅ Registrar DatabaseHelper como singleton
   sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
+
+  //! Features - File Management
+  // Repositories
+  sl.registerLazySingleton<FileManagementRepository>(
+        () => FileManagementRepositoryImpl(fileManagementService: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<FileManagementService>(
+        () => FileManagementServiceImpl(),
+  );
 
   //! Features - Auth
   // Repositories
@@ -81,8 +96,8 @@ Future<void> init() async {
         () => RegisterProfileBloc(
       profileRepository: sl<ProfileRepository>(),
       userRepository: sl<UserRepository>(),
+      fileManagementRepository: sl<FileManagementRepository>(),
       // TODO: Add locationRepository: sl<LocationRepository>(),
-      // TODO: Add fileManagementRepository: sl<FileManagementRepository>()
     ),
   );
 

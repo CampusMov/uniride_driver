@@ -7,6 +7,7 @@ import 'package:uniride_driver/features/profile/presentantion/bloc/states/regist
 
 import '../../../../core/utils/resource.dart';
 import '../../../auth/domain/repositories/user_repository.dart';
+import '../../../file/domain/repositories/file_management_repository.dart';
 import '../../../shared/domain/entities/location.dart';
 import '../../domain/entities/class_schedule.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -14,14 +15,14 @@ import '../../domain/repositories/profile_repository.dart';
 class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileState> {
   final ProfileRepository profileRepository;
   final UserRepository userRepository;
+  final FileManagementRepository fileManagementRepository;
   // TODO: Add final LocationRepository locationRepository;
-  // TODO: Add final FileManagementRepository fileManagementRepository;
 
   RegisterProfileBloc({
     required this.profileRepository,
     required this.userRepository,
+    required this.fileManagementRepository,
     // TODO: Add required this.locationRepository,
-    // TODO: Add required this.fileManagementRepository,
   }) : super(const RegisterProfileState()) {
     on<LoadUserLocally>(_onLoadUserLocally);
     on<FirstNameChanged>(_onFirstNameChanged);
@@ -147,33 +148,33 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
   void _onUploadProfileImage(UploadProfileImage event, Emitter<RegisterProfileState> emit) async {
     emit(state.copyWith(isLoading: true));
 
-    // try {
-    //   final fileName = state.user?.id ??
-    //       '${state.profileState.firstName}_${state.profileState.lastName}';
-    //   final result = await fileManagementRepository.uploadFile(
-    //     event.filePath,
-    //     'images',
-    //     fileName,
-    //   );
-    //
-    //   switch (result) {
-    //     case Success<String>():
-    //       emit(state.copyWith(
-    //         isLoading: false,
-    //         profileState: state.profileState.copyWith(profilePictureUrl: result.data),
-    //       ));
-    //       break;
-    //     case Failure<String>():
-    //       log('TAG: RegisterProfileBloc: Error uploading profile image: ${result.message}');
-    //       emit(state.copyWith(isLoading: false));
-    //       break;
-    //     case Loading<String>():
-    //       break;
-    //   }
-    // } catch (e) {
-    //   log('TAG: RegisterProfileBloc: Error uploading profile image: $e');
-    //   emit(state.copyWith(isLoading: false));
-    // }
+    try {
+      final fileName = state.user?.id ??
+          '${state.profileState.firstName}_${state.profileState.lastName}';
+      final result = await fileManagementRepository.uploadImage(
+        event.uri,
+        'profile_driver_images',
+        fileName,
+      );
+
+      switch (result) {
+        case Success<String>():
+          emit(state.copyWith(
+            isLoading: false,
+            profileState: state.profileState.copyWith(profilePictureUrl: result.data),
+          ));
+          break;
+        case Failure<String>():
+          log('TAG: RegisterProfileBloc: Error uploading profile image: ${result.message}');
+          emit(state.copyWith(isLoading: false));
+          break;
+        case Loading<String>():
+          break;
+      }
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error uploading profile image: $e');
+      emit(state.copyWith(isLoading: false));
+    }
   }
 
   void _onSaveProfile(SaveProfile event, Emitter<RegisterProfileState> emit) async {
