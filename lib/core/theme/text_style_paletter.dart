@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:flutter/material.dart'; // Reemplazado dart:ui
 
 import 'package:uniride_driver/core/theme/color_paletter.dart';
 
@@ -62,7 +62,7 @@ class TextStylePaletter {
   //Estilo para los textos de las opciones de busqueda como horarios
   static final TextStyle subTextOptions = TextStyle(
     fontSize: 16,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     color: ColorPaletter.textPrimary,
   );
 
