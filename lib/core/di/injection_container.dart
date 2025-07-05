@@ -10,7 +10,20 @@ import 'package:uniride_driver/features/auth/domain/repositories/auth_repository
 import 'package:uniride_driver/features/auth/domain/repositories/user_repository.dart';
 import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
+import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
 
+import '../../features/file/data/datasources/file_management_service_impl.dart';
+import '../../features/file/data/repositories/file_management_repository_impl.dart';
+import '../../features/file/domain/repositories/file_management_repository.dart';
+import '../../features/file/domain/services/file_management_service.dart';
+import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
+import '../../features/profile/data/datasource/profile_service_impl.dart';
+import '../../features/profile/data/repositories/profile_class_schedule_repository_impl.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_class_schedule_repository.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/services/profile_class_schedule_service.dart';
+import '../../features/profile/domain/services/profile_service.dart';
 import '../database/database_helper.dart';
 
 final sl = GetIt.instance;
@@ -19,6 +32,17 @@ Future<void> init() async {
   //! Core - Database (PRIMERO)
   // ✅ Registrar DatabaseHelper como singleton
   sl.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper.instance);
+
+  //! Features - File Management
+  // Repositories
+  sl.registerLazySingleton<FileManagementRepository>(
+        () => FileManagementRepositoryImpl(fileManagementService: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<FileManagementService>(
+        () => FileManagementServiceImpl(),
+  );
 
   //! Features - Auth
   // Repositories
@@ -42,7 +66,44 @@ Future<void> init() async {
         () => UserLocalServiceImpl(databaseHelper: sl()),
   );
 
-  //! Core
-  sl.registerLazySingleton(() => http.Client());
+  //! Features - Profile
+  // Repositories
+  sl.registerLazySingleton<ProfileRepository>(
+        () => ProfileRepositoryImpl(profileService: sl()),
+  );
+
+  sl.registerLazySingleton<ProfileClassScheduleRepository>(
+        () => ProfileClassScheduleRepositoryImpl(profileClassScheduleService: sl()),
+  );
+
+  // Services
+  sl.registerLazySingleton<ProfileService>(
+        () => ProfileServiceImpl(
+      client: sl(),
+      baseUrl: '${ApiConstants.baseUrl}${ApiConstants.profileServiceName}',
+    ),
+  );
+
+  sl.registerLazySingleton<ProfileClassScheduleService>(
+        () => ProfileClassScheduleServiceImpl(
+      client: sl(),
+      baseUrl: '${ApiConstants.baseUrl}${ApiConstants.profileServiceName}',
+    ),
+  );
+
+  // Blocs
+  sl.registerLazySingleton<RegisterProfileBloc>(
+        () => RegisterProfileBloc(
+      profileRepository: sl<ProfileRepository>(),
+      userRepository: sl<UserRepository>(),
+      fileManagementRepository: sl<FileManagementRepository>(),
+      // TODO: Add locationRepository: sl<LocationRepository>(),
+    ),
+  );
+
+  //! Core - Already registered in existing init()
+  if (!sl.isRegistered<http.Client>()) {
+    sl.registerLazySingleton(() => http.Client());
+  }
 }
 

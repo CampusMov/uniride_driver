@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "727687120332",
+    "project_id": "uniridefilemanagement-de08c",
+    "storage_bucket": "uniridefilemanagement-de08c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727687120332:android:7fd40379992f92be5ac969",
+        "android_client_info": {
+          "package_name": "com.campusmov.uniride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmZaMKNwbvn4JGqnPW9Q2-Qzll8mivWeY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727687120332:android:ae9cde4f7abba36e5ac969",
+        "android_client_info": {
+          "package_name": "com.campusmov.uniride.uniride_driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmZaMKNwbvn4JGqnPW9Q2-Qzll8mivWeY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

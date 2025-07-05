@@ -78,7 +78,7 @@ class _VerificationCodeViewState extends State<_VerificationCodeView> {
     return BlocListener<VerificationCodeBloc, VerificationCodeState>(
       listener: (context, state) {
         if (state.isVerificationSuccess) {
-          Navigator.of(context).pushReplacementNamed(ScreensRoutes.registerProfile);
+          Navigator.of(context).pushReplacementNamed(ScreensRoutes.registerProfileFullName);
         }
       },
       child: Scaffold(
