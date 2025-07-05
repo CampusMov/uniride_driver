@@ -1,3 +1,3 @@
 abstract class FileManagementService {
-  Future<String> uploadImage(String filePath, String folder, String fileName);
+  Future<String> uploadImage(Uri uri, String folder, String fileName);
 }

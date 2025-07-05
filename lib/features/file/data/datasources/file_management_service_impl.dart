@@ -6,14 +6,14 @@ import 'package:uniride_driver/features/file/domain/services/file_management_ser
 
 class FileManagementServiceImpl implements FileManagementService {
   @override
-  Future<String> uploadImage(String filePath, String folder, String fileName) async {
+  Future<String> uploadImage(Uri uri, String folder, String fileName) async {
     final path = '$folder/$fileName';
-    final file = File(filePath);
+    final file = File.fromUri(uri);
     final ref = FirebaseStorage.instance.ref().child(path);
 
     try {
       if (!await file.exists()) {
-        throw Exception('File does not exist: $filePath');
+        throw Exception('File does not exist: ${uri.path}');
       }
       final uploadTask = ref.putFile(file);
       final snapshot = await uploadTask;

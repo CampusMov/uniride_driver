@@ -11,9 +11,9 @@ class FileManagementRepositoryImpl implements FileManagementRepository {
   FileManagementRepositoryImpl({required this.fileManagementService});
 
   @override
-  Future<Resource<String>> uploadImage(String filePath, String folder, String fileName) async {
+  Future<Resource<String>> uploadImage(Uri uri, String folder, String fileName) async {
     try {
-      final result = await fileManagementService.uploadImage(filePath, folder, fileName);
+      final result = await fileManagementService.uploadImage(uri, folder, fileName);
       log('TAG: FileManagementRepositoryImpl: Image uploaded successfully: $result');
       return Success(result);
     } catch (e) {
