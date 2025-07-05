@@ -189,6 +189,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
           emit(state.copyWith(
             isLoading: false,
             registerProfileResponse: const Success(null),
+            isRegisteredProfileSuccess: true
           ));
           break;
         case Failure<void>():
@@ -196,6 +197,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
           emit(state.copyWith(
             isLoading: false,
             registerProfileResponse: Failure(result.message),
+            isRegisteredProfileSuccess: false,
           ));
           break;
         case Loading<void>():

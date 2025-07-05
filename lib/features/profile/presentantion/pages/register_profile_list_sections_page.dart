@@ -17,7 +17,14 @@ class RegisterProfileListSectionsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: di.sl<RegisterProfileBloc>(),
-      child: const _RegisterProfileListSectionsContent(),
+      child: BlocListener<RegisterProfileBloc, RegisterProfileState>(
+        listener: (context, state) {
+          if(state.isRegisteredProfileSuccess) {
+            Navigator.of(context).pushReplacementNamed(ScreensRoutes.searchCarpool);
+          }
+        },
+        child: const _RegisterProfileListSectionsContent(),
+      ),
     );
   }
 }

@@ -50,7 +50,9 @@ class MainApp extends StatelessWidget {
       ScreensRoutes.registerProfilePersonalInformation : (context) => const RegisterProfilePersonalInfoPage(),
       ScreensRoutes.registerProfileContactInformation : (context) => const RegisterProfileContactInfoPage(),
       ScreensRoutes.registerProfileAcademicInformation : (context) => const RegisterProfileAcademicInfoPage(),
-      ScreensRoutes.registerProfileAcceptTermsAndConditions : (context) => const RegisterProfileAcceptTermsPage()
+      ScreensRoutes.registerProfileAcceptTermsAndConditions : (context) => const RegisterProfileAcceptTermsPage(),
+      // TODO: Add the actual SearchCarpoolPage implementation
+      ScreensRoutes.searchCarpool : (context) => const Placeholder(),
     });
   }
 }

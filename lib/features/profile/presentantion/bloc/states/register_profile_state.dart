@@ -13,6 +13,7 @@ class RegisterProfileState extends Equatable {
   final int nextRecommendedStep;
   final bool isTermsAccepted;
   final bool isScheduleDialogOpen;
+  final bool isRegisteredProfileSuccess;
   //final List<PlacePrediction> locationPredictions;
 
   const RegisterProfileState({
@@ -24,6 +25,7 @@ class RegisterProfileState extends Equatable {
     this.nextRecommendedStep = 0,
     this.isTermsAccepted = false,
     this.isScheduleDialogOpen = false,
+    this.isRegisteredProfileSuccess = false,
     //this.locationPredictions = const [],
   });
 
@@ -90,6 +92,7 @@ class RegisterProfileState extends Equatable {
     int? nextRecommendedStep,
     bool? isTermsAccepted,
     bool? isScheduleDialogOpen,
+    bool? isRegisteredProfileSuccess,
     //List<PlacePrediction>? locationPredictions,
   }) {
     return RegisterProfileState(
@@ -101,6 +104,7 @@ class RegisterProfileState extends Equatable {
       nextRecommendedStep: nextRecommendedStep ?? this.nextRecommendedStep,
       isTermsAccepted: isTermsAccepted ?? this.isTermsAccepted,
       isScheduleDialogOpen: isScheduleDialogOpen ?? this.isScheduleDialogOpen,
+      isRegisteredProfileSuccess: isRegisteredProfileSuccess ?? this.isRegisteredProfileSuccess,
       //locationPredictions: locationPredictions ?? this.locationPredictions,
     );
   }
