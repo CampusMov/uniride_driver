@@ -1,5 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/pages/home_page.dart';
 import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/enter_institutional_email_page.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/verification_code_page.dart';
@@ -14,6 +18,7 @@ import 'package:uniride_driver/firebase_options.dart';
 import 'core/di/injection_container.dart' as di;
 import 'features/profile/presentantion/pages/register_profile_full_name_page.dart';
 import 'features/profile/presentantion/pages/register_profile_list_sections_page.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +36,8 @@ void main() async {
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
+
+  // Initialize the app
 
   @override
   Widget build(BuildContext context) {
