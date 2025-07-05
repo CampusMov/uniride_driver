@@ -17,8 +17,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent,FavoritesState>{
     });
       
     on<AddFavorite>((event, emit) async {
-      try {
-        emit(LoadingState());
+      emit(LoadingState());
         
         final placeFavoriteDao = PlaceFavoriteDao();
         await placeFavoriteDao.addFavorite(event.prediction);
@@ -26,9 +25,6 @@ class FavoritesBloc extends Bloc<FavoritesEvent,FavoritesState>{
         // Recargar la lista de favoritos después de agregar
         final predictions = await placeFavoriteDao.getAllFavorites();
         emit(LoadedState(predictions: predictions));
-      } catch (e) {
-        emit(InitialState()); // En caso de error, volver al estado inicial
-      }
     });
   }
 }

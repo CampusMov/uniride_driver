@@ -127,7 +127,7 @@ class _PositionSelectionPageDestinationState extends State<PositionSelectionPage
             
             } else if(state is LoadedState ){
               return PlacePredictionsListView(
-                predictions: state.predictions, isMode: true,);
+                predictions: state.predictions, isMode: false,); // false para destino
             }
             return Text("Esperando ubicación...");
             

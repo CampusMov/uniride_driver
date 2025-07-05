@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<NavigatorState> _panelNavigatorKey = GlobalKey<NavigatorState>();
 
   double _controlHeight = 450.0; // Altura del panel deslizante
+  bool _isNavigating = false; // Estado para mostrar carga durante navegación
 
 
   @override
@@ -36,6 +37,23 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     
 
+  }
+
+  // Método para navegar con carga
+  Future<void> _navigateWithLoading(String routeName) async {
+    setState(() {
+      _isNavigating = true;
+    });
+    
+    // Simular carga pequeña
+    await Future.delayed(Duration(milliseconds: 500));
+    
+    // Navegar a la nueva página
+    _panelNavigatorKey.currentState?.pushNamed(routeName);
+    
+    setState(() {
+      _isNavigating = false;
+    });
   }
 
   @override
@@ -117,8 +135,9 @@ class _HomePageState extends State<HomePage> {
                             value ? debugPrint("Seleccionar origen") :
                             debugPrint("Seleccionar destino");
 
-                            value ? _panelNavigatorKey.currentState?.pushNamed('/position_selection_origin') :
-                            _panelNavigatorKey.currentState?.pushNamed('/position_selection_destination');
+                            // Usar navegación con carga
+                            value ? _navigateWithLoading('/position_selection_origin') :
+                            _navigateWithLoading('/position_selection_destination');
 
                           },
                           
@@ -127,18 +146,16 @@ class _HomePageState extends State<HomePage> {
                       case '/position_selection_origin':
                         page = PositionSelectionPageOrigin(
                           onTap: (){
-                            // Navega a la página de creación de carpool
-                            
-                            _panelNavigatorKey.currentState?.pushNamed('/create_carpool');
+                            // Navegar a la página de creación de carpool con carga
+                            _navigateWithLoading('/create_carpool');
                           }
                         );
                         break;
                       case '/position_selection_destination':
                         page = PositionSelectionPageDestination(
                           onTap: (){
-                            // Navega a la página de creación de carpool
-                            
-                            _panelNavigatorKey.currentState?.pushNamed('/create_carpool');
+                            // Navegar a la página de creación de carpool con carga
+                            _navigateWithLoading('/create_carpool');
                           }
                         );
                         break;
@@ -150,8 +167,9 @@ class _HomePageState extends State<HomePage> {
                             value ? debugPrint("Seleccionar origen") :
                             debugPrint("Seleccionar destino");
 
-                            value ? _panelNavigatorKey.currentState?.pushNamed('/position_selection_origin') :
-                            _panelNavigatorKey.currentState?.pushNamed('/position_selection_destination');
+                            // Usar navegación con carga
+                            value ? _navigateWithLoading('/position_selection_origin') :
+                            _navigateWithLoading('/position_selection_destination');
                           }
                           
                         );
