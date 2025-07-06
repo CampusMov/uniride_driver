@@ -11,10 +11,9 @@ import 'package:uniride_driver/features/home/presentation/pages/request_passenge
 import 'package:uniride_driver/features/home/presentation/widgets/btns_adduser_and_location_view.dart';
 import 'package:uniride_driver/features/home/presentation/widgets/map_view.dart';
 import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
-
-// Importar el BLoC y el injection container
-import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/core/di/injection_container.dart' as di;
+
+import '../bloc/carpool/create_carpool_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
