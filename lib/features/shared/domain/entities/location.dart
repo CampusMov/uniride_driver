@@ -7,10 +7,10 @@ class Location extends Equatable {
   final String address;
 
   const Location({
-    required this.name,
-    required this.latitude,
-    required this.longitude,
-    required this.address,
+    this.name = '',
+    this.latitude = 0.0,
+    this.longitude = 0.0,
+    this.address = '',
   });
 
   @override
