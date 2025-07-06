@@ -11,8 +11,11 @@ import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
 import 'package:uniride_driver/features/home/data/datasources/carpool_service_impl.dart';
 import 'package:uniride_driver/features/home/data/repositories/carpool_repository_impl.dart';
+import 'package:uniride_driver/features/home/data/repositories/route_repository_impl.dart';
 import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
+import 'package:uniride_driver/features/home/domain/repositories/route_repository.dart';
 import 'package:uniride_driver/features/home/domain/services/carpool_service.dart';
+import 'package:uniride_driver/features/home/domain/services/route_service.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
 
@@ -21,6 +24,7 @@ import '../../features/file/data/repositories/file_management_repository_impl.da
 import '../../features/file/domain/repositories/file_management_repository.dart';
 import '../../features/file/domain/services/file_management_service.dart';
 import '../../features/home/data/datasources/location_service.dart';
+import '../../features/home/data/datasources/route_service_impl.dart';
 import '../../features/home/data/repositories/location_repository.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
@@ -158,6 +162,18 @@ Future<void> init() async {
       profileClassScheduleRepository: sl<ProfileClassScheduleRepository>(),
       locationRepository: sl<LocationRepository>(),
     ),
+  );
+  
+  //! Features - Routes
+  sl.registerLazySingleton<RouteRepository>(
+      () => RouteRepositoryImpl(routeService: sl())
+  );
+
+  sl.registerLazySingleton<RouteService>(
+      () => RouteServiceImpl(
+        client: sl(),
+        baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
+      )
   );
 
   //! Core - Already registered in existing init()
