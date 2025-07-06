@@ -26,5 +26,16 @@ class FavoritesBloc extends Bloc<FavoritesEvent,FavoritesState>{
         final predictions = await placeFavoriteDao.getAllFavorites();
         emit(LoadedState(predictions: predictions));
     });
+
+    on<RemoveFavorite>((event, emit) async {
+      emit(LoadingState());
+        
+        final placeFavoriteDao = PlaceFavoriteDao();
+        await placeFavoriteDao.removeFavorite(event.placeId);
+        
+        // Recargar la lista de favoritos después de eliminar
+        final predictions = await placeFavoriteDao.getAllFavorites();
+        emit(LoadedState(predictions: predictions));
+    });
   }
 }

@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uniride_driver/core/theme/color_paletter.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_event.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_state.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_event.dart';
 import 'package:uniride_driver/features/home/presentation/pages/create_carpool_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/details_carpool_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/position_destination_selection_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/position_origin_selection_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/request_passengers_page.dart';
+import 'package:uniride_driver/features/home/presentation/widgets/btns_adduser_and_location_view.dart';
 import 'package:uniride_driver/features/home/presentation/widgets/map_view.dart';
 import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
 
@@ -29,6 +28,7 @@ class _HomePageState extends State<HomePage> {
 
   double _controlHeight = 450.0; // Altura del panel deslizante
   bool _isNavigating = false; // Estado para mostrar carga durante navegación
+  bool _isCarpoolStarted = false; // Estado para mantener si el carpool fue iniciado
 
 
   @override
@@ -50,6 +50,23 @@ class _HomePageState extends State<HomePage> {
     
     // Navegar a la nueva página
     _panelNavigatorKey.currentState?.pushNamed(routeName);
+    
+    setState(() {
+      _isNavigating = false;
+    });
+  }
+
+  // Método para navegar a detalles del carpool
+  Future<void> _navigateToDetails() async {
+    setState(() {
+      _isNavigating = true;
+    });
+    
+    // Simular carga pequeña
+    await Future.delayed(Duration(milliseconds: 500));
+    
+    // Navegar a la página de detalles
+    _panelNavigatorKey.currentState?.pushNamed('/details_carpool');
     
     setState(() {
       _isNavigating = false;
@@ -94,7 +111,18 @@ class _HomePageState extends State<HomePage> {
           }
         ),
           
+          //Btns de accion flotante para aceptar o rechazar solicitudes de viaje
+          //y mi ubicacion
+          BtnsAddUserAndLocationView(
+            onTapUser: (){
+              _navigateWithLoading('/request_passengers');
 
+            }, 
+            onTapLocation: (){
+              //Poner evento para que el mapa se centre en mi ubicacion
+            }
+          ),
+          
           
           
            // Panel deslizante
@@ -125,6 +153,15 @@ class _HomePageState extends State<HomePage> {
                     switch (settings.name) {
                       case '/create_carpool':
                         page = CreateCarpoolPage(
+                          isInitiallyStarted: _isCarpoolStarted,
+                          onModeChanged: (started) {
+                            setState(() {
+                              _isCarpoolStarted = started;
+                            });
+                          },
+                          onNavigateToDetails: () {
+                            _navigateToDetails();
+                          },
                           onTap: (value) {
                             
                             debugPrint("onTap: $value");
@@ -142,6 +179,14 @@ class _HomePageState extends State<HomePage> {
                           },
                           
                         );
+                        break;
+                      case '/request_passengers':
+                        page = RequestPassengersPage(
+                          
+                        );
+                        break;
+                      case '/details_carpool':
+                        page = CarpoolDetailsPage();
                         break;
                       case '/position_selection_origin':
                         page = PositionSelectionPageOrigin(
@@ -161,6 +206,15 @@ class _HomePageState extends State<HomePage> {
                         break;
                       default:
                         page = CreateCarpoolPage(
+                          isInitiallyStarted: _isCarpoolStarted,
+                          onModeChanged: (started) {
+                            setState(() {
+                              _isCarpoolStarted = started;
+                            });
+                          },
+                          onNavigateToDetails: () {
+                            _navigateToDetails();
+                          },
                           onTap: (value) {
                             debugPrint("onTap: $value");
                             
@@ -180,8 +234,14 @@ class _HomePageState extends State<HomePage> {
               ),
             )
           ),
+        
+          // Overlay de carga durante navegación
+         
+
         ],
       ),
+      
+      
     );
   }
 }

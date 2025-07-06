@@ -12,10 +12,18 @@ import 'package:uniride_driver/features/home/presentation/bloc/select_location/s
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_state.dart';
 
 class CreateCarpoolPage extends StatefulWidget {
-  const CreateCarpoolPage({super.key,
-  required this.onTap,});
+  const CreateCarpoolPage({
+    super.key,
+    required this.onTap,
+    this.isInitiallyStarted = false,
+    this.onModeChanged,
+    this.onNavigateToDetails,
+  });
 
   final ValueChanged<bool> onTap;
+  final bool isInitiallyStarted;
+  final ValueChanged<bool>? onModeChanged;
+  final VoidCallback? onNavigateToDetails;
 
   
   @override
@@ -36,35 +44,63 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
   //Asientos disponibles y radio de emparejamiento
   var _availableSeats = 0;
   var _pairingRadius = 10;
+  
+  // Booleano para controlar el modo: true = Crear, false = Iniciar
+  bool _isCreateMode = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _isCreateMode = !widget.isInitiallyStarted;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        //Selecciona el lugar de partida
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Row(
+    return Scaffold(
+      backgroundColor: ColorPaletter.background,
+      appBar: !_isCreateMode ? AppBar(
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            setState(() {
+              _isCreateMode = true;
+            });
+            // Notificar al padre que el modo cambió de vuelta a crear
+            widget.onModeChanged?.call(false); // false = carpool no iniciado
+          },
+        ),
+        elevation: 0,
+      ) : null,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //Selecciona el lugar de partida
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.adjust, color: ColorPaletter.textPrimary),
-                  SizedBox(width: 10),
-                  //Escucha el evento de selecionar un lugar de origen y cambia de valor el 
                   Expanded(
-                    child: BlocListener<SelectLocationBloc,SelectLocationState>(
-                      listener: (context,state){
-                        if (state is SelectLocationLoadesOrigin) {
-                          setState(() {
-                            initialPosition = LatLng(
-                              double.parse(state.locationOrigin.latitude), 
-                              double.parse(state.locationOrigin.longitude));
+                    child: Row(
+                      children: [
+                        Icon(Icons.adjust, color: ColorPaletter.textPrimary),
+                        SizedBox(width: 10),
+                        //Escucha el evento de selecionar un lugar de origen y cambia de valor el 
+                        Expanded(
+                          child: BlocListener<SelectLocationBloc,SelectLocationState>(
+                            listener: (context,state){
+                              if (state is SelectLocationLoadesOrigin) {
+                                setState(() {
+                                  initialPosition = LatLng(
+                                    double.parse(state.locationOrigin.latitude), 
+                                    double.parse(state.locationOrigin.longitude));
 
-                            _selectedOrigin = state.locationOrigin.address;
-                          });
-                        }
-                      },
+                                  _selectedOrigin = state.locationOrigin.address;
+                                });
+                              }
+                            },
                       child: Text(
                         _selectedOrigin ?? "Selecciona lugar de Inicio",
                         style: TextStylePaletter.body,
@@ -77,7 +113,6 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
             ),
 
             ElevatedButton(
-              
               onPressed:(){
                  widget.onTap(true);
               },
@@ -96,7 +131,9 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
           ],
         ),
         SizedBox(height: 10),
+
         //Selecciona el lugar de destino
+        if(!_isCreateMode)     
          Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -157,11 +194,12 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
         ),
 
         SizedBox(height: 20),
-                            
+
+        if(_isCreateMode)               
         CustomTextField(
           icon: Icon(Icons.search, color: ColorPaletter.textPrimary),
           editingController: _destinatedController,
-          hintText: 'Buscar destino',
+          hintText: 'Clase',
         ),
 
         SizedBox(height: 20),
@@ -201,13 +239,33 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
       
         SizedBox(height: 20),
 
+        
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: (){},
+            onPressed: (){
+              if (_isCreateMode) {
+                setState(() {
+                  _isCreateMode = false;
+                });
+                // Notificar al padre que el modo cambió
+                widget.onModeChanged?.call(true); // true = carpool iniciado
+              } else {
+                //Cambiar ruta al presionar boton
+                 widget.onNavigateToDetails?.call();
+                // Solo mostrar un mensaje cuando está en modo Iniciar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Carpool iniciado correctamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                
+              }
+            },
             style: BtnStylePaletter.primary,
 
-            child: Text("Buscar emparejamiento",
+            child: Text(_isCreateMode ? "Crear Carpool" : "Iniciar Carpool",
               style: TextStylePaletter.button, 
             ),
           ),
@@ -215,6 +273,9 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
 
 
       ],
+    ),
+        ),
+      ),
     );
   }
 }

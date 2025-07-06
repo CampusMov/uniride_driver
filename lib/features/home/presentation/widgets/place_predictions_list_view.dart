@@ -34,6 +34,8 @@ class PlacePredictionsListView extends StatelessWidget {
                   ),
                   onPressed: (){
                     // Usar el BLoC para agregar favorito
+                    prediction.isFavorite ?
+                    context.read<FavoritesBloc>().add(RemoveFavorite(placeId: prediction.placeId)) :
                     context.read<FavoritesBloc>().add(AddFavorite(prediction: prediction));
                     
                     

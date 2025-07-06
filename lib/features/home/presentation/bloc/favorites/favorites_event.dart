@@ -15,3 +15,10 @@ class AddFavorite extends FavoritesEvent {
 
   AddFavorite({required this.prediction});
 }
+
+class RemoveFavorite extends FavoritesEvent {
+
+  final String placeId;
+
+  RemoveFavorite({required this.placeId});
+}
