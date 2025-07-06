@@ -5,6 +5,8 @@ import 'package:uniride_driver/core/utils/resource.dart';
 import 'package:uniride_driver/features/home/domain/entities/carpool.dart';
 import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
 import 'package:uniride_driver/features/profile/domain/entities/vehicle.dart';
+import 'package:uniride_driver/features/profile/domain/entities/class_schedule.dart';
+import 'package:uniride_driver/features/profile/domain/repositories/profile_class_schedule_repository.dart';
 
 import '../../../../auth/domain/repositories/user_repository.dart';
 import 'create_carpool_event.dart';
@@ -13,10 +15,12 @@ import 'create_carpool_state.dart';
 class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
   final CarpoolRepository carpoolRepository;
   final UserRepository userRepository;
+  final ProfileClassScheduleRepository profileClassScheduleRepository;
 
   CreateCarpoolBloc({
     required this.carpoolRepository,
     required this.userRepository,
+    required this.profileClassScheduleRepository,
   }) : super(const CreateCarpoolState()) {
     on<LoadUserLocally>(_onLoadUserLocally);
     on<LoadVehicleLocally>(_onLoadVehicleLocally);
@@ -29,6 +33,20 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
     on<ClassScheduleChanged>(_onClassScheduleChanged);
     on<OriginLocationChanged>(_onOriginLocationChanged);
     on<SaveCarpool>(_onSaveCarpool);
+
+    // Class Schedule Dialog Events
+    on<OpenDialogToSelectClassSchedule>(_onOpenDialogToSelectClassSchedule);
+    on<CloseDialogToSelectClassSchedule>(_onCloseDialogToSelectClassSchedule);
+    on<ClassScheduleSelected>(_onClassScheduleSelected);
+    on<ClassScheduleSearchChanged>(_onClassScheduleSearchChanged);
+    on<LoadClassSchedules>(_onLoadClassSchedules);
+
+    // Origin Location Dialog Events
+    on<OpenDialogToSelectOriginLocation>(_onOpenDialogToSelectOriginLocation);
+    on<CloseDialogToSelectOriginLocation>(_onCloseDialogToSelectOriginLocation);
+    on<OriginLocationSelected>(_onOriginLocationSelected);
+    on<OriginLocationSearchChanged>(_onOriginLocationSearchChanged);
+    on<OriginLocationCleared>(_onOriginLocationCleared);
 
     add(const LoadUserLocally());
     add(const LoadVehicleLocally());
@@ -88,6 +106,125 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
   void _onOriginLocationChanged(OriginLocationChanged event, Emitter<CreateCarpoolState> emit) {
     // TODO: Get the query predictions from the API place details
     //emit(state.copyWith(originLocation: event.originLocation));
+  }
+
+  // Class Schedule Dialog Events
+  void _onOpenDialogToSelectClassSchedule(OpenDialogToSelectClassSchedule event, Emitter<CreateCarpoolState> emit) {
+    emit(state.copyWith(
+      isSelectClassScheduleDialogOpen: true,
+      classScheduleSearchQuery: '',
+    ));
+    // Load class schedules when dialog opens
+    add(const LoadClassSchedules());
+  }
+
+  void _onCloseDialogToSelectClassSchedule(CloseDialogToSelectClassSchedule event, Emitter<CreateCarpoolState> emit) {
+    emit(state.copyWith(
+      isSelectClassScheduleDialogOpen: false,
+      classScheduleSearchQuery: '',
+      allClassSchedules: [],
+      filteredClassSchedules: [],
+      isLoadingClassSchedules: false,
+    ));
+  }
+
+  void _onClassScheduleSelected(ClassScheduleSelected event, Emitter<CreateCarpoolState> emit) {
+    emit(state.copyWith(
+      classSchedule: event.classSchedule,
+      isSelectClassScheduleDialogOpen: false,
+      classScheduleSearchQuery: '',
+      allClassSchedules: [],
+      filteredClassSchedules: [],
+    ));
+  }
+
+  void _onClassScheduleSearchChanged(ClassScheduleSearchChanged event, Emitter<CreateCarpoolState> emit) {
+    final query = event.searchTerm.toLowerCase();
+
+    if (query.isEmpty) {
+      emit(state.copyWith(
+        classScheduleSearchQuery: event.searchTerm,
+        filteredClassSchedules: state.allClassSchedules,
+      ));
+    } else {
+      final filtered = state.allClassSchedules.where((schedule) {
+        return schedule.courseName.toLowerCase().contains(query) ||
+            schedule.locationName.toLowerCase().contains(query) ||
+            schedule.selectedDay.showDay().toLowerCase().contains(query);
+      }).toList();
+
+      emit(state.copyWith(
+        classScheduleSearchQuery: event.searchTerm,
+        filteredClassSchedules: filtered,
+      ));
+    }
+  }
+
+  void _onLoadClassSchedules(LoadClassSchedules event, Emitter<CreateCarpoolState> emit) async {
+    if (state.user == null) {
+      log('TAG: CreateCarpoolBloc: Cannot load class schedules - user is null');
+      return;
+    }
+
+    emit(state.copyWith(isLoadingClassSchedules: true));
+
+    try {
+      final result = await profileClassScheduleRepository.getClassScheduleByProfileId(state.user!.id);
+
+      switch (result) {
+        case Success<List<ClassSchedule>>():
+          log('TAG: CreateCarpoolBloc: Class schedules loaded successfully: ${result.data.length} schedules');
+          emit(state.copyWith(
+            allClassSchedules: result.data,
+            filteredClassSchedules: result.data,
+            isLoadingClassSchedules: false,
+          ));
+          break;
+        case Failure<List<ClassSchedule>>():
+          log('TAG: CreateCarpoolBloc: Failed to load class schedules: ${result.message}');
+          emit(state.copyWith(
+            allClassSchedules: [],
+            filteredClassSchedules: [],
+            isLoadingClassSchedules: false,
+          ));
+          break;
+        case Loading<List<ClassSchedule>>():
+        // Already loading
+          break;
+      }
+    } catch (e) {
+      log('TAG: CreateCarpoolBloc: Error loading class schedules: $e');
+      emit(state.copyWith(
+        allClassSchedules: [],
+        filteredClassSchedules: [],
+        isLoadingClassSchedules: false,
+      ));
+    }
+  }
+
+  // Origin Location Dialog Events
+  void _onOpenDialogToSelectOriginLocation(OpenDialogToSelectOriginLocation event, Emitter<CreateCarpoolState> emit) {
+    emit(state.copyWith(isSelectOriginLocationDialogOpen: true));
+  }
+
+  void _onCloseDialogToSelectOriginLocation(CloseDialogToSelectOriginLocation event, Emitter<CreateCarpoolState> emit) {
+    emit(state.copyWith(
+      isSelectOriginLocationDialogOpen: false,
+      locationPredictions: [],
+    ));
+  }
+
+  void _onOriginLocationSelected(OriginLocationSelected event, Emitter<CreateCarpoolState> emit) {
+    // TODO: Implement origin location selection
+    emit(state.copyWith(isSelectOriginLocationDialogOpen: false));
+  }
+
+  void _onOriginLocationSearchChanged(OriginLocationSearchChanged event, Emitter<CreateCarpoolState> emit) {
+    // TODO: Implement origin location search
+  }
+
+  void _onOriginLocationCleared(OriginLocationCleared event, Emitter<CreateCarpoolState> emit) {
+    // TODO: Implement origin location clearing
   }
 
   Future<void> _onSaveCarpool(SaveCarpool event, Emitter<CreateCarpoolState> emit) async {

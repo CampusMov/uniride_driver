@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../profile/domain/entities/class_schedule.dart';
-import '../../../../shared/domain/entities/location.dart';
 import '../../../domain/entities/place_prediction.dart';
 
 abstract class CreateCarpoolEvent extends Equatable {
@@ -79,7 +78,7 @@ class SaveCarpool extends CreateCarpoolEvent {
   const SaveCarpool();
 }
 
-// Select class schedule event
+// Select class schedule events
 class OpenDialogToSelectClassSchedule extends CreateCarpoolEvent {
   const OpenDialogToSelectClassSchedule();
 }
@@ -106,7 +105,11 @@ class ClassScheduleSearchChanged extends CreateCarpoolEvent {
   List<Object?> get props => [searchTerm];
 }
 
-// Select origin location event
+class LoadClassSchedules extends CreateCarpoolEvent {
+  const LoadClassSchedules();
+}
+
+// Select origin location events
 class OpenDialogToSelectOriginLocation extends CreateCarpoolEvent {
   const OpenDialogToSelectOriginLocation();
 }
