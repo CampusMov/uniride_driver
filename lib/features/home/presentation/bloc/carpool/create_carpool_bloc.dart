@@ -7,8 +7,10 @@ import 'package:uniride_driver/features/home/domain/repositories/carpool_reposit
 import 'package:uniride_driver/features/profile/domain/entities/vehicle.dart';
 import 'package:uniride_driver/features/profile/domain/entities/class_schedule.dart';
 import 'package:uniride_driver/features/profile/domain/repositories/profile_class_schedule_repository.dart';
+import 'package:uniride_driver/features/home/data/repositories/location_repository.dart';
 
 import '../../../../auth/domain/repositories/user_repository.dart';
+import '../../../../shared/domain/entities/location.dart';
 import 'create_carpool_event.dart';
 import 'create_carpool_state.dart';
 
@@ -16,11 +18,13 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
   final CarpoolRepository carpoolRepository;
   final UserRepository userRepository;
   final ProfileClassScheduleRepository profileClassScheduleRepository;
+  final LocationRepository locationRepository;
 
   CreateCarpoolBloc({
     required this.carpoolRepository,
     required this.userRepository,
     required this.profileClassScheduleRepository,
+    required this.locationRepository,
   }) : super(const CreateCarpoolState()) {
     on<LoadUserLocally>(_onLoadUserLocally);
     on<LoadVehicleLocally>(_onLoadVehicleLocally);
@@ -214,17 +218,55 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
     ));
   }
 
-  void _onOriginLocationSelected(OriginLocationSelected event, Emitter<CreateCarpoolState> emit) {
-    // TODO: Implement origin location selection
-    emit(state.copyWith(isSelectOriginLocationDialogOpen: false));
+  void _onOriginLocationSelected(OriginLocationSelected event, Emitter<CreateCarpoolState> emit) async {
+    try {
+      final location = await locationRepository.getLocationByPlaceId(event.originLocationPrediction.placeId);
+
+      if (location != null) {
+        final selectedLocation = Location(
+          name: event.originLocationPrediction.description,
+          latitude: double.parse(location.latitude),
+          longitude: double.parse(location.longitude),
+          address: location.address,
+        );
+
+        log('TAG: CreateCarpoolBloc: Origin location selected: ${selectedLocation.address}');
+        log('TAG: CreateCarpoolBloc: Coordinates: ${selectedLocation.latitude}, ${selectedLocation.longitude}');
+
+        emit(state.copyWith(
+          originLocation: selectedLocation,
+          isSelectOriginLocationDialogOpen: false,
+          locationPredictions: [],
+        ));
+      } else {
+        log('TAG: CreateCarpoolBloc: Could not get origin location details from Place Details API');
+      }
+    } catch (e) {
+      log('TAG: CreateCarpoolBloc: Error getting origin place details: $e');
+    }
   }
 
-  void _onOriginLocationSearchChanged(OriginLocationSearchChanged event, Emitter<CreateCarpoolState> emit) {
-    // TODO: Implement origin location search
+  void _onOriginLocationSearchChanged(OriginLocationSearchChanged event, Emitter<CreateCarpoolState> emit) async {
+    if (event.searchTerm.isEmpty) {
+      emit(state.copyWith(locationPredictions: []));
+      return;
+    }
+
+    try {
+      final predictions = await locationRepository.searchLocation(event.searchTerm);
+      log('TAG: CreateCarpoolBloc: Found ${predictions.length} location predictions for origin');
+      emit(state.copyWith(locationPredictions: predictions));
+    } catch (e) {
+      log('TAG: CreateCarpoolBloc: Error getting origin location predictions: $e');
+      emit(state.copyWith(locationPredictions: []));
+    }
   }
 
   void _onOriginLocationCleared(OriginLocationCleared event, Emitter<CreateCarpoolState> emit) {
-    // TODO: Implement origin location clearing
+    emit(state.copyWith(
+      originLocation: null,
+      locationPredictions: [],
+    ));
   }
 
   Future<void> _onSaveCarpool(SaveCarpool event, Emitter<CreateCarpoolState> emit) async {
