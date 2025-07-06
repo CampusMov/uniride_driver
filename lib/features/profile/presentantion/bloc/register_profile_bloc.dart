@@ -1,5 +1,7 @@
 import 'dart:developer';
+import 'dart:math' hide log;
 
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_event.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/states/current_class_schedule_state.dart';
@@ -9,20 +11,26 @@ import '../../../../core/utils/resource.dart';
 import '../../../auth/domain/repositories/user_repository.dart';
 import '../../../file/domain/repositories/file_management_repository.dart';
 import '../../../shared/domain/entities/location.dart';
+import '../../../home/data/repositories/location_repository.dart';
 import '../../domain/entities/class_schedule.dart';
+import '../../domain/entities/enum_vehicle_status.dart';
+import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../domain/repositories/vehicle_repository.dart';
 
 class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileState> {
   final ProfileRepository profileRepository;
   final UserRepository userRepository;
   final FileManagementRepository fileManagementRepository;
-  // TODO: Add final LocationRepository locationRepository;
+  final LocationRepository locationRepository;
+  final VehicleRepository vehicleRepository;
 
   RegisterProfileBloc({
     required this.profileRepository,
     required this.userRepository,
     required this.fileManagementRepository,
-    // TODO: Add required this.locationRepository,
+    required this.locationRepository,
+    required this.vehicleRepository,
   }) : super(const RegisterProfileState()) {
     on<LoadUserLocally>(_onLoadUserLocally);
     on<FirstNameChanged>(_onFirstNameChanged);
@@ -39,6 +47,12 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     on<NextStepChanged>(_onNextStepChanged);
     on<UploadProfileImage>(_onUploadProfileImage);
     on<SaveProfile>(_onSaveProfile);
+
+    // Vehicle Events
+    on<VehicleBrandChanged>(_onVehicleBrandChanged);
+    on<VehicleModelChanged>(_onVehicleModelChanged);
+    on<VehicleYearChanged>(_onVehicleYearChanged);
+    on<VehicleLicensePlateChanged>(_onVehicleLicensePlateChanged);
 
     // Class Schedule Events
     on<OpenDialogToAddNewSchedule>(_onOpenDialogToAddNewSchedule);
@@ -145,6 +159,23 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(nextRecommendedStep: event.nextStep));
   }
 
+  // Vehicle Events
+  void _onVehicleBrandChanged(VehicleBrandChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleBrand: event.brand));
+  }
+
+  void _onVehicleModelChanged(VehicleModelChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleModel: event.model));
+  }
+
+  void _onVehicleYearChanged(VehicleYearChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleYear: event.year));
+  }
+
+  void _onVehicleLicensePlateChanged(VehicleLicensePlateChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleLicensePlate: event.licensePlate));
+  }
+
   void _onUploadProfileImage(UploadProfileImage event, Emitter<RegisterProfileState> emit) async {
     emit(state.copyWith(isLoading: true));
 
@@ -181,22 +212,21 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(isLoading: true));
 
     try {
-      final result = await profileRepository.saveProfile(state.profileState.toDomain());
+      final profileResult = await profileRepository.saveProfile(state.profileState.toDomain());
 
-      switch (result) {
+      switch (profileResult) {
         case Success<void>():
           log('TAG: RegisterProfileBloc: Profile saved successfully');
-          emit(state.copyWith(
-            isLoading: false,
-            registerProfileResponse: const Success(null),
-            isRegisteredProfileSuccess: true
-          ));
+
+          // 2. Crear y guardar vehículo después del perfil exitoso
+          await _createVehicle(emit);
+
           break;
         case Failure<void>():
-          log('TAG: RegisterProfileBloc: Error saving profile: ${result.message}');
+          log('TAG: RegisterProfileBloc: Error saving profile: ${profileResult.message}');
           emit(state.copyWith(
             isLoading: false,
-            registerProfileResponse: Failure(result.message),
+            registerProfileResponse: Failure(profileResult.message),
             isRegisteredProfileSuccess: false,
           ));
           break;
@@ -212,10 +242,68 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     }
   }
 
+  Future<void> _createVehicle(Emitter<RegisterProfileState> emit) async {
+    try {
+      // Generar VIN aleatorio
+      final vin = _generateRandomVin();
+
+      final vehicle = Vehicle(
+        brand: state.vehicleBrand,
+        model: state.vehicleModel,
+        year: state.vehicleYear,
+        status: EVehicleStatus.active,
+        vin: vin,
+        licensePlate: state.vehicleLicensePlate,
+        ownerId: state.user?.id ?? '',
+      );
+
+      final vehicleResult = await vehicleRepository.createVehicle(vehicle);
+
+      switch (vehicleResult) {
+        case Success<Vehicle>():
+          log('TAG: RegisterProfileBloc: Vehicle created successfully: ${vehicleResult.data.licensePlate}');
+          emit(state.copyWith(
+            isLoading: false,
+            registerProfileResponse: const Success(null),
+            isRegisteredProfileSuccess: true,
+          ));
+          break;
+        case Failure<Vehicle>():
+          log('TAG: RegisterProfileBloc: Error creating vehicle: ${vehicleResult.message}');
+          // Aunque falle el vehículo, el perfil ya se guardó exitosamente
+          emit(state.copyWith(
+            isLoading: false,
+            registerProfileResponse: const Success(null),
+            isRegisteredProfileSuccess: true,
+          ));
+          break;
+        case Loading<Vehicle>():
+          break;
+      }
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error creating vehicle: $e');
+      // Aunque falle el vehículo, el perfil ya se guardó exitosamente
+      emit(state.copyWith(
+        isLoading: false,
+        registerProfileResponse: const Success(null),
+        isRegisteredProfileSuccess: true,
+      ));
+    }
+  }
+
+  String _generateRandomVin() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        17, (_) => chars.codeUnitAt(random.nextInt(chars.length))
+    ));
+  }
+
   void _onOpenDialogToAddNewSchedule(OpenDialogToAddNewSchedule event, Emitter<RegisterProfileState> emit) {
     emit(state.copyWith(
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: true,
+      locationPredictions: [],
     ));
   }
 
@@ -245,6 +333,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
         selectedDay: selectedClassSchedule.selectedDay,
       ),
       isScheduleDialogOpen: true,
+      locationPredictions: [],
     ));
   }
 
@@ -252,7 +341,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: false,
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -301,46 +390,48 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
   }
 
   void _onScheduleLocationQueryChanged(ScheduleLocationQueryChanged event, Emitter<RegisterProfileState> emit) async {
-    // try {
-    //   final result = await locationRepository.getPlacePredictions(event.query);
-    //
-    //   switch (result) {
-    //     case Success<List<PlacePrediction>>():
-    //       emit(state.copyWith(locationPredictions: result));
-    //       break;
-    //     case Failure<List<PlacePrediction>>():
-    //       log('TAG: RegisterProfileBloc: Error getting place predictions: $result');
-    //       break;
-    //     case Loading<List<PlacePrediction>>():
-    //       break;
-    //   }
-    // } catch (e) {
-    //   log('TAG: RegisterProfileBloc: Error getting place predictions: $e');
-    // }
+    if (event.query.isEmpty) {
+      emit(state.copyWith(locationPredictions: []));
+      return;
+    }
+
+    try {
+      final predictions = await locationRepository.searchLocation(event.query);
+      log('TAG: RegisterProfileBloc: Found ${predictions.length} location predictions');
+      emit(state.copyWith(locationPredictions: predictions));
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error getting place predictions: $e');
+      emit(state.copyWith(locationPredictions: []));
+    }
   }
 
   void _onScheduleLocationSelected(ScheduleLocationSelected event, Emitter<RegisterProfileState> emit) async {
-    // try {
-    //   final result = await locationRepository.getPlaceDetails(event.placePrediction.id);
-    //
-    //   switch (result) {
-    //     case Success<Place>():
-    //       final location = Location.fromPlace(result);
-    //       emit(state.copyWith(
-    //         currentClassScheduleState: state.currentClassScheduleState.copyWith(
-    //           selectedLocation: location,
-    //         ),
-    //       ));
-    //       break;
-    //     case Failure<Place>():
-    //       log('TAG: RegisterProfileBloc: Error getting place details: $result');
-    //       break;
-    //     case Loading<Place>():
-    //       break;
-    //   }
-    // } catch (e) {
-    //   log('TAG: RegisterProfileBloc: Error getting place details: $e');
-    // }
+    try {
+      final location = await locationRepository.getLocationByPlaceId(event.placePrediction.placeId);
+
+      if (location != null) {
+        final selectedLocation = Location(
+          name: event.placePrediction.description,
+          latitude: double.parse(location.latitude),
+          longitude: double.parse(location.longitude),
+          address: location.address,
+        );
+
+        log('TAG: RegisterProfileBloc: Location selected via Place Details: ${selectedLocation.address}');
+        log('TAG: RegisterProfileBloc: Coordinates: ${selectedLocation.latitude}, ${selectedLocation.longitude}');
+
+        emit(state.copyWith(
+          currentClassScheduleState: state.currentClassScheduleState.copyWith(
+            selectedLocation: selectedLocation,
+          ),
+          locationPredictions: [],
+        ));
+      } else {
+        log('TAG: RegisterProfileBloc: Could not get location details from Place Details API');
+      }
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error getting place details: $e');
+    }
   }
 
   void _onScheduleLocationCleared(ScheduleLocationCleared event, Emitter<RegisterProfileState> emit) {
@@ -348,7 +439,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
       currentClassScheduleState: state.currentClassScheduleState.copyWith(
         selectedLocation: null,
       ),
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -366,7 +457,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
       profileState: state.profileState.copyWith(classSchedules: updatedSchedules),
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: false,
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -392,7 +483,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
       profileState: state.profileState.copyWith(classSchedules: updatedSchedules),
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: false,
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -420,5 +511,15 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
         scheduleState.endedAt != null &&
         scheduleState.selectedDay != null &&
         scheduleState.selectedLocation != null;
+  }
+}
+
+extension on TimeOfDay {
+  bool isAfter(TimeOfDay other) {
+    return hour > other.hour || (hour == other.hour && minute > other.minute);
+  }
+
+  bool isBefore(TimeOfDay other) {
+    return hour < other.hour || (hour == other.hour && minute < other.minute);
   }
 }

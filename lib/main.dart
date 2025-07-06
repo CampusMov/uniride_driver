@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/pages/home_page.dart';
@@ -18,6 +19,7 @@ import 'package:uniride_driver/firebase_options.dart';
 import 'core/di/injection_container.dart' as di;
 import 'features/profile/presentantion/pages/register_profile_full_name_page.dart';
 import 'features/profile/presentantion/pages/register_profile_list_sections_page.dart';
+import 'features/profile/presentantion/pages/register_profile_vehicle_info_page.dart';
 
 
 void main() async {
@@ -43,6 +45,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'UniRide',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
         primarySwatch: Colors.blue,
     ),
@@ -57,9 +60,18 @@ class MainApp extends StatelessWidget {
       ScreensRoutes.registerProfilePersonalInformation : (context) => const RegisterProfilePersonalInfoPage(),
       ScreensRoutes.registerProfileContactInformation : (context) => const RegisterProfileContactInfoPage(),
       ScreensRoutes.registerProfileAcademicInformation : (context) => const RegisterProfileAcademicInfoPage(),
+      ScreensRoutes.registerProfileVehicleInformation : (context) => const RegisterProfileVehicleInfoPage(),
       ScreensRoutes.registerProfileAcceptTermsAndConditions : (context) => const RegisterProfileAcceptTermsPage(),
-      // TODO: Add the actual SearchCarpoolPage implementation
-      ScreensRoutes.searchCarpool : (context) => const Placeholder(),
+      ScreensRoutes.searchCarpool : (context) => BlocProvider(
+        create: (context) => SelectLocationBloc(),
+        child: BlocProvider(
+          create: (context) => MapBloc(),
+          child: BlocProvider(
+            create: (context) => FavoritesBloc(),
+            child: const HomePage(),
+          ),
+        ),
+      ),
     });
   }
 }

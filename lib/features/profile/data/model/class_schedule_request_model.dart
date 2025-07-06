@@ -33,16 +33,16 @@ class ClassScheduleRequestModel {
       latitude: classSchedule.latitude,
       longitude: classSchedule.longitude,
       address: classSchedule.address,
-      startedAt: _timeOfDayToIsoString(classSchedule.startedAt),
-      endedAt: _timeOfDayToIsoString(classSchedule.endedAt),
+      startedAt: _timeOfDayToTimeString(classSchedule.startedAt),
+      endedAt: _timeOfDayToTimeString(classSchedule.endedAt),
       selectedDay: classSchedule.selectedDay.value,
     );
   }
 
-  static String _timeOfDayToIsoString(TimeOfDay time) {
-    final now = DateTime.now();
-    final dateTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    return dateTime.toIso8601String();
+  static String _timeOfDayToTimeString(TimeOfDay time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute:00';
   }
 
   Map<String, dynamic> toJson() {

@@ -18,6 +18,13 @@ class ClassScheduleDialogView extends StatefulWidget {
 
 class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
   String _locationQuery = '';
+  final TextEditingController _locationController = TextEditingController();
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,19 +32,27 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
       builder: (context, state) {
         final currentSchedule = state.currentClassScheduleState;
         final isValid = state.isCurrentClassScheduleValid;
-        //final locationPredictions = state.locationPredictions;
+        final locationPredictions = state.locationPredictions;
 
         // Sync location query with selected location
-        if (currentSchedule.selectedLocation != null && _locationQuery.isEmpty) {
+        if (currentSchedule.selectedLocation != null &&
+            _locationQuery.isEmpty) {
           _locationQuery = currentSchedule.selectedLocation!.address;
+          _locationController.text = _locationQuery;
         }
 
         return Dialog(
           insetPadding: EdgeInsets.zero,
           backgroundColor: Colors.transparent,
           child: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
+            width: MediaQuery
+                .of(context)
+                .size
+                .width,
+            height: MediaQuery
+                .of(context)
+                .size
+                .height,
             decoration: const BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.only(
@@ -58,7 +73,9 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                         const SizedBox(width: 40.0),
                         Expanded(
                           child: Text(
-                            currentSchedule.isEditing ? 'Actualizar horario' : 'Agregar horario',
+                            currentSchedule.isEditing
+                                ? 'Actualizar horario'
+                                : 'Agregar horario',
                             style: const TextStyle(
                               fontSize: 30.0,
                               fontWeight: FontWeight.w800,
@@ -97,7 +114,8 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                           // Course Name
                           const Text(
                             'Nombre del curso',
-                            style: TextStyle(fontSize: 16.0, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 16.0, color: Colors.white),
                           ),
                           const SizedBox(height: 8.0),
                           DefaultRoundedInputField(
@@ -114,7 +132,8 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                           // Start Time
                           const Text(
                             'Hora de inicio',
-                            style: TextStyle(fontSize: 16.0, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 16.0, color: Colors.white),
                           ),
                           const SizedBox(height: 8.0),
                           TimePickerInputField24H(
@@ -131,7 +150,8 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                           // End Time
                           const Text(
                             'Hora de salida',
-                            style: TextStyle(fontSize: 16.0, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 16.0, color: Colors.white),
                           ),
                           const SizedBox(height: 8.0),
                           TimePickerInputField24H(
@@ -148,13 +168,15 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                           // Day Selection
                           const Text(
                             'Día de la semana',
-                            style: TextStyle(fontSize: 16.0, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 16.0, color: Colors.white),
                           ),
                           const SizedBox(height: 8.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: EDay.values.map((day) {
-                              final isSelected = currentSchedule.selectedDay == day;
+                              final isSelected = currentSchedule.selectedDay ==
+                                  day;
                               return GestureDetector(
                                 onTap: () {
                                   context.read<RegisterProfileBloc>()
@@ -164,7 +186,9 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                                   width: 36.0,
                                   height: 36.0,
                                   decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFF3F4042) : Colors.transparent,
+                                    color: isSelected
+                                        ? const Color(0xFF3F4042)
+                                        : Colors.transparent,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
@@ -186,7 +210,8 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                           // Location
                           const Text(
                             'Universidad ubicación',
-                            style: TextStyle(fontSize: 16.0, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 16.0, color: Colors.white),
                           ),
                           const SizedBox(height: 8.0),
                           DefaultRoundedInputField(
@@ -195,6 +220,8 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                               setState(() {
                                 _locationQuery = value;
                               });
+                              _locationController.text = value;
+
                               if (value.isEmpty) {
                                 context.read<RegisterProfileBloc>()
                                     .add(const ScheduleLocationCleared());
@@ -207,42 +234,130 @@ class _ClassScheduleDialogViewState extends State<ClassScheduleDialogView> {
                           ),
 
                           // Location Predictions
-                          // if (currentSchedule.selectedLocation == null && locationPredictions.isNotEmpty)
-                          //   Container(
-                          //     margin: const EdgeInsets.only(top: 16.0),
-                          //     height: 120.0,
-                          //     child: ListView.separated(
-                          //       itemCount: locationPredictions.length,
-                          //       separatorBuilder: (context, index) => const Divider(
-                          //         color: Colors.white,
-                          //         height: 1.0,
-                          //       ),
-                          //       itemBuilder: (context, index) {
-                          //         //final prediction = locationPredictions[index];
-                          //         return InkWell(
-                          //           onTap: () {
-                          //             // context.read<RegisterProfileBloc>()
-                          //             //     .add(ScheduleLocationSelected(prediction));
-                          //             // setState(() {
-                          //             //   // TODO: Update location query with selected prediction
-                          //             //   //_locationQuery = prediction.fullText;
-                          //             // });
-                          //           },
-                          //           child: Padding(
-                          //             padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          //             child: Text(
-                          //               // TODO: Update this to show the full address or name prediction.fullText,
-                          //               "predication default",
-                          //               style: const TextStyle(
-                          //                 fontSize: 14.0,
-                          //                 color: Colors.white,
-                          //               ),
-                          //             ),
-                          //           ),
-                          //         );
-                          //       },
-                          //     ),
-                          //   ),
+                          if (currentSchedule.selectedLocation == null &&
+                              locationPredictions.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(top: 16.0),
+                              height: 200.0,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2D2D2D),
+                                borderRadius: BorderRadius.circular(8.0),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4.0,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: ListView.separated(
+                                itemCount: locationPredictions.length,
+                                separatorBuilder: (context, index) =>
+                                const Divider(
+                                  color: Colors.white24,
+                                  height: 1.0,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final prediction = locationPredictions[index];
+                                  return InkWell(
+                                    onTap: () {
+                                      context.read<RegisterProfileBloc>()
+                                          .add(ScheduleLocationSelected(
+                                          prediction));
+                                      setState(() {
+                                        _locationQuery = prediction.description;
+                                      });
+                                      _locationController.text = _locationQuery;
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0,
+                                        horizontal: 16.0,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.location_on,
+                                            color: Colors.white70,
+                                            size: 20.0,
+                                          ),
+                                          const SizedBox(width: 12.0),
+                                          Expanded(
+                                            child: Text(
+                                              prediction.description,
+                                              style: const TextStyle(
+                                                fontSize: 14.0,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                          // Selected Location Display
+                          if (currentSchedule.selectedLocation != null)
+                            Container(
+                              margin: const EdgeInsets.only(top: 16.0),
+                              padding: const EdgeInsets.all(12.0),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2D2D2D),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 20.0,
+                                  ),
+                                  const SizedBox(width: 12.0),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment
+                                          .start,
+                                      children: [
+                                        const Text(
+                                          'Ubicación seleccionada:',
+                                          style: TextStyle(
+                                            fontSize: 12.0,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4.0),
+                                        Text(
+                                          currentSchedule.selectedLocation!
+                                              .address,
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read<RegisterProfileBloc>()
+                                          .add(const ScheduleLocationCleared());
+                                      setState(() {
+                                        _locationQuery = '';
+                                      });
+                                      _locationController.clear();
+                                    },
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white70,
+                                      size: 16.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
