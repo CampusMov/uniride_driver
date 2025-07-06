@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/enum_day.dart';
 import '../../domain/entities/enum_gender.dart';
+import '../../../home/domain/entities/place_prediction.dart';
 
 abstract class RegisterProfileEvent extends Equatable {
   const RegisterProfileEvent();
@@ -204,12 +205,12 @@ class ScheduleLocationQueryChanged extends RegisterProfileEvent {
 }
 
 class ScheduleLocationSelected extends RegisterProfileEvent {
-  // final PlacePrediction placePrediction;
-  //
-  // const ScheduleLocationSelected(this.placePrediction);
-  //
-  // @override
-  // List<Object?> get props => [placePrediction];
+  final Prediction placePrediction;
+
+  const ScheduleLocationSelected(this.placePrediction);
+
+  @override
+  List<Object?> get props => [placePrediction];
 }
 
 class ScheduleLocationCleared extends RegisterProfileEvent {
