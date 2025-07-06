@@ -3,6 +3,7 @@ import 'package:uniride_driver/core/utils/resource.dart';
 import 'package:uniride_driver/features/auth/domain/entities/user.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/states/current_class_schedule_state.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/states/profile_form_state.dart';
+import 'package:uniride_driver/features/home/domain/entities/place_prediction.dart';
 
 class RegisterProfileState extends Equatable {
   final ProfileFormState profileState;
@@ -14,7 +15,7 @@ class RegisterProfileState extends Equatable {
   final bool isTermsAccepted;
   final bool isScheduleDialogOpen;
   final bool isRegisteredProfileSuccess;
-  //final List<PlacePrediction> locationPredictions;
+  final List<Prediction> locationPredictions;
 
   const RegisterProfileState({
     this.profileState = const ProfileFormState(),
@@ -26,7 +27,7 @@ class RegisterProfileState extends Equatable {
     this.isTermsAccepted = false,
     this.isScheduleDialogOpen = false,
     this.isRegisteredProfileSuccess = false,
-    //this.locationPredictions = const [],
+    this.locationPredictions = const [],
   });
 
   // Validation computed properties
@@ -93,7 +94,7 @@ class RegisterProfileState extends Equatable {
     bool? isTermsAccepted,
     bool? isScheduleDialogOpen,
     bool? isRegisteredProfileSuccess,
-    //List<PlacePrediction>? locationPredictions,
+    List<Prediction>? locationPredictions,
   }) {
     return RegisterProfileState(
       profileState: profileState ?? this.profileState,
@@ -105,7 +106,7 @@ class RegisterProfileState extends Equatable {
       isTermsAccepted: isTermsAccepted ?? this.isTermsAccepted,
       isScheduleDialogOpen: isScheduleDialogOpen ?? this.isScheduleDialogOpen,
       isRegisteredProfileSuccess: isRegisteredProfileSuccess ?? this.isRegisteredProfileSuccess,
-      //locationPredictions: locationPredictions ?? this.locationPredictions,
+      locationPredictions: locationPredictions ?? this.locationPredictions,
     );
   }
 
@@ -119,6 +120,7 @@ class RegisterProfileState extends Equatable {
     nextRecommendedStep,
     isTermsAccepted,
     isScheduleDialogOpen,
-    //locationPredictions,
+    isRegisteredProfileSuccess,
+    locationPredictions,
   ];
 }

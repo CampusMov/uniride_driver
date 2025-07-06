@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_event.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/states/current_class_schedule_state.dart';
@@ -9,6 +10,7 @@ import '../../../../core/utils/resource.dart';
 import '../../../auth/domain/repositories/user_repository.dart';
 import '../../../file/domain/repositories/file_management_repository.dart';
 import '../../../shared/domain/entities/location.dart';
+import '../../../home/data/repositories/location_repository.dart';
 import '../../domain/entities/class_schedule.dart';
 import '../../domain/repositories/profile_repository.dart';
 
@@ -16,13 +18,13 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
   final ProfileRepository profileRepository;
   final UserRepository userRepository;
   final FileManagementRepository fileManagementRepository;
-  // TODO: Add final LocationRepository locationRepository;
+  final LocationRepository locationRepository;
 
   RegisterProfileBloc({
     required this.profileRepository,
     required this.userRepository,
     required this.fileManagementRepository,
-    // TODO: Add required this.locationRepository,
+    required this.locationRepository,
   }) : super(const RegisterProfileState()) {
     on<LoadUserLocally>(_onLoadUserLocally);
     on<FirstNameChanged>(_onFirstNameChanged);
@@ -187,9 +189,9 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
         case Success<void>():
           log('TAG: RegisterProfileBloc: Profile saved successfully');
           emit(state.copyWith(
-            isLoading: false,
-            registerProfileResponse: const Success(null),
-            isRegisteredProfileSuccess: true
+              isLoading: false,
+              registerProfileResponse: const Success(null),
+              isRegisteredProfileSuccess: true
           ));
           break;
         case Failure<void>():
@@ -216,6 +218,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: true,
+      locationPredictions: [],
     ));
   }
 
@@ -245,6 +248,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
         selectedDay: selectedClassSchedule.selectedDay,
       ),
       isScheduleDialogOpen: true,
+      locationPredictions: [],
     ));
   }
 
@@ -252,7 +256,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: false,
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -301,46 +305,48 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
   }
 
   void _onScheduleLocationQueryChanged(ScheduleLocationQueryChanged event, Emitter<RegisterProfileState> emit) async {
-    // try {
-    //   final result = await locationRepository.getPlacePredictions(event.query);
-    //
-    //   switch (result) {
-    //     case Success<List<PlacePrediction>>():
-    //       emit(state.copyWith(locationPredictions: result));
-    //       break;
-    //     case Failure<List<PlacePrediction>>():
-    //       log('TAG: RegisterProfileBloc: Error getting place predictions: $result');
-    //       break;
-    //     case Loading<List<PlacePrediction>>():
-    //       break;
-    //   }
-    // } catch (e) {
-    //   log('TAG: RegisterProfileBloc: Error getting place predictions: $e');
-    // }
+    if (event.query.isEmpty) {
+      emit(state.copyWith(locationPredictions: []));
+      return;
+    }
+
+    try {
+      final predictions = await locationRepository.searchLocation(event.query);
+      log('TAG: RegisterProfileBloc: Found ${predictions.length} location predictions');
+      emit(state.copyWith(locationPredictions: predictions));
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error getting place predictions: $e');
+      emit(state.copyWith(locationPredictions: []));
+    }
   }
 
   void _onScheduleLocationSelected(ScheduleLocationSelected event, Emitter<RegisterProfileState> emit) async {
-    // try {
-    //   final result = await locationRepository.getPlaceDetails(event.placePrediction.id);
-    //
-    //   switch (result) {
-    //     case Success<Place>():
-    //       final location = Location.fromPlace(result);
-    //       emit(state.copyWith(
-    //         currentClassScheduleState: state.currentClassScheduleState.copyWith(
-    //           selectedLocation: location,
-    //         ),
-    //       ));
-    //       break;
-    //     case Failure<Place>():
-    //       log('TAG: RegisterProfileBloc: Error getting place details: $result');
-    //       break;
-    //     case Loading<Place>():
-    //       break;
-    //   }
-    // } catch (e) {
-    //   log('TAG: RegisterProfileBloc: Error getting place details: $e');
-    // }
+    try {
+      final location = await locationRepository.getLocationByPlaceId(event.placePrediction.placeId);
+
+      if (location != null) {
+        final selectedLocation = Location(
+          name: event.placePrediction.description,
+          latitude: double.parse(location.latitude),
+          longitude: double.parse(location.longitude),
+          address: location.address,
+        );
+
+        log('TAG: RegisterProfileBloc: Location selected via Place Details: ${selectedLocation.address}');
+        log('TAG: RegisterProfileBloc: Coordinates: ${selectedLocation.latitude}, ${selectedLocation.longitude}');
+
+        emit(state.copyWith(
+          currentClassScheduleState: state.currentClassScheduleState.copyWith(
+            selectedLocation: selectedLocation,
+          ),
+          locationPredictions: [],
+        ));
+      } else {
+        log('TAG: RegisterProfileBloc: Could not get location details from Place Details API');
+      }
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error getting place details: $e');
+    }
   }
 
   void _onScheduleLocationCleared(ScheduleLocationCleared event, Emitter<RegisterProfileState> emit) {
@@ -348,7 +354,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
       currentClassScheduleState: state.currentClassScheduleState.copyWith(
         selectedLocation: null,
       ),
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -366,7 +372,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
       profileState: state.profileState.copyWith(classSchedules: updatedSchedules),
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: false,
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -392,7 +398,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
       profileState: state.profileState.copyWith(classSchedules: updatedSchedules),
       currentClassScheduleState: const CurrentClassScheduleState(),
       isScheduleDialogOpen: false,
-      //locationPredictions: [],
+      locationPredictions: [],
     ));
   }
 
@@ -420,5 +426,15 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
         scheduleState.endedAt != null &&
         scheduleState.selectedDay != null &&
         scheduleState.selectedLocation != null;
+  }
+}
+
+extension on TimeOfDay {
+  bool isAfter(TimeOfDay other) {
+    return hour > other.hour || (hour == other.hour && minute > other.minute);
+  }
+
+  bool isBefore(TimeOfDay other) {
+    return hour < other.hour || (hour == other.hour && minute < other.minute);
   }
 }
