@@ -16,6 +16,8 @@ import '../../features/file/data/datasources/file_management_service_impl.dart';
 import '../../features/file/data/repositories/file_management_repository_impl.dart';
 import '../../features/file/domain/repositories/file_management_repository.dart';
 import '../../features/file/domain/services/file_management_service.dart';
+import '../../features/home/data/datasources/location_service.dart';
+import '../../features/home/data/repositories/location_repository.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
 import '../../features/profile/data/repositories/profile_class_schedule_repository_impl.dart';
@@ -42,6 +44,17 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<FileManagementService>(
         () => FileManagementServiceImpl(),
+  );
+
+  //! Features - Location
+  // Repositories
+  sl.registerLazySingleton<LocationRepository>(
+        () => LocationRepository(locationService: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<LocationService>(
+        () => LocationService(),
   );
 
   //! Features - Auth
@@ -97,7 +110,7 @@ Future<void> init() async {
       profileRepository: sl<ProfileRepository>(),
       userRepository: sl<UserRepository>(),
       fileManagementRepository: sl<FileManagementRepository>(),
-      // TODO: Add locationRepository: sl<LocationRepository>(),
+      locationRepository: sl<LocationRepository>(),
     ),
   );
 
