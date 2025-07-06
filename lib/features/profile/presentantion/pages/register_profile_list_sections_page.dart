@@ -51,6 +51,11 @@ class _RegisterProfileListSectionsContent extends StatelessWidget {
         icon: Icons.chevron_right,
       ),
       NavigationItem(
+        title: 'Información del vehículo',
+        route: ScreensRoutes.registerProfileVehicleInformation,
+        icon: Icons.chevron_right,
+      ),
+      NavigationItem(
         title: 'Términos y condiciones',
         route: ScreensRoutes.registerProfileAcceptTermsAndConditions,
         icon: Icons.chevron_right,

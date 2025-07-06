@@ -126,6 +126,43 @@ class NextStepChanged extends RegisterProfileEvent {
   List<Object?> get props => [nextStep];
 }
 
+// Vehicle events
+class VehicleBrandChanged extends RegisterProfileEvent {
+  final String brand;
+
+  const VehicleBrandChanged(this.brand);
+
+  @override
+  List<Object?> get props => [brand];
+}
+
+class VehicleModelChanged extends RegisterProfileEvent {
+  final String model;
+
+  const VehicleModelChanged(this.model);
+
+  @override
+  List<Object?> get props => [model];
+}
+
+class VehicleYearChanged extends RegisterProfileEvent {
+  final int year;
+
+  const VehicleYearChanged(this.year);
+
+  @override
+  List<Object?> get props => [year];
+}
+
+class VehicleLicensePlateChanged extends RegisterProfileEvent {
+  final String licensePlate;
+
+  const VehicleLicensePlateChanged(this.licensePlate);
+
+  @override
+  List<Object?> get props => [licensePlate];
+}
+
 // File upload events
 class UploadProfileImage extends RegisterProfileEvent {
   final Uri uri;

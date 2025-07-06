@@ -20,12 +20,16 @@ import '../../features/home/data/datasources/location_service.dart';
 import '../../features/home/data/repositories/location_repository.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
+import '../../features/profile/data/datasource/vehicle_service_impl.dart';
 import '../../features/profile/data/repositories/profile_class_schedule_repository_impl.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/data/repositories/vehicle_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_class_schedule_repository.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/repositories/vehicle_repository.dart';
 import '../../features/profile/domain/services/profile_class_schedule_service.dart';
 import '../../features/profile/domain/services/profile_service.dart';
+import '../../features/profile/domain/services/vehicle_service.dart';
 import '../database/database_helper.dart';
 
 final sl = GetIt.instance;
@@ -55,6 +59,20 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<LocationService>(
         () => LocationService(),
+  );
+
+  //! Features - Vehicle
+  // Repositories
+  sl.registerLazySingleton<VehicleRepository>(
+        () => VehicleRepositoryImpl(vehicleService: sl()),
+  );
+
+  // Services
+  sl.registerLazySingleton<VehicleService>(
+        () => VehicleServiceImpl(
+      client: sl(),
+      baseUrl: '${ApiConstants.baseUrl}${ApiConstants.profileServiceName}',
+    ),
   );
 
   //! Features - Auth
@@ -111,6 +129,7 @@ Future<void> init() async {
       userRepository: sl<UserRepository>(),
       fileManagementRepository: sl<FileManagementRepository>(),
       locationRepository: sl<LocationRepository>(),
+      vehicleRepository: sl<VehicleRepository>(),
     ),
   );
 

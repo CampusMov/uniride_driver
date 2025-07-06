@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:math' hide log;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,19 +13,24 @@ import '../../../file/domain/repositories/file_management_repository.dart';
 import '../../../shared/domain/entities/location.dart';
 import '../../../home/data/repositories/location_repository.dart';
 import '../../domain/entities/class_schedule.dart';
+import '../../domain/entities/enum_vehicle_status.dart';
+import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../domain/repositories/vehicle_repository.dart';
 
 class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileState> {
   final ProfileRepository profileRepository;
   final UserRepository userRepository;
   final FileManagementRepository fileManagementRepository;
   final LocationRepository locationRepository;
+  final VehicleRepository vehicleRepository;
 
   RegisterProfileBloc({
     required this.profileRepository,
     required this.userRepository,
     required this.fileManagementRepository,
     required this.locationRepository,
+    required this.vehicleRepository,
   }) : super(const RegisterProfileState()) {
     on<LoadUserLocally>(_onLoadUserLocally);
     on<FirstNameChanged>(_onFirstNameChanged);
@@ -41,6 +47,12 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     on<NextStepChanged>(_onNextStepChanged);
     on<UploadProfileImage>(_onUploadProfileImage);
     on<SaveProfile>(_onSaveProfile);
+
+    // Vehicle Events
+    on<VehicleBrandChanged>(_onVehicleBrandChanged);
+    on<VehicleModelChanged>(_onVehicleModelChanged);
+    on<VehicleYearChanged>(_onVehicleYearChanged);
+    on<VehicleLicensePlateChanged>(_onVehicleLicensePlateChanged);
 
     // Class Schedule Events
     on<OpenDialogToAddNewSchedule>(_onOpenDialogToAddNewSchedule);
@@ -147,6 +159,23 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(nextRecommendedStep: event.nextStep));
   }
 
+  // Vehicle Events
+  void _onVehicleBrandChanged(VehicleBrandChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleBrand: event.brand));
+  }
+
+  void _onVehicleModelChanged(VehicleModelChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleModel: event.model));
+  }
+
+  void _onVehicleYearChanged(VehicleYearChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleYear: event.year));
+  }
+
+  void _onVehicleLicensePlateChanged(VehicleLicensePlateChanged event, Emitter<RegisterProfileState> emit) {
+    emit(state.copyWith(vehicleLicensePlate: event.licensePlate));
+  }
+
   void _onUploadProfileImage(UploadProfileImage event, Emitter<RegisterProfileState> emit) async {
     emit(state.copyWith(isLoading: true));
 
@@ -183,22 +212,21 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
     emit(state.copyWith(isLoading: true));
 
     try {
-      final result = await profileRepository.saveProfile(state.profileState.toDomain());
+      final profileResult = await profileRepository.saveProfile(state.profileState.toDomain());
 
-      switch (result) {
+      switch (profileResult) {
         case Success<void>():
           log('TAG: RegisterProfileBloc: Profile saved successfully');
-          emit(state.copyWith(
-              isLoading: false,
-              registerProfileResponse: const Success(null),
-              isRegisteredProfileSuccess: true
-          ));
+
+          // 2. Crear y guardar vehículo después del perfil exitoso
+          await _createVehicle(emit);
+
           break;
         case Failure<void>():
-          log('TAG: RegisterProfileBloc: Error saving profile: ${result.message}');
+          log('TAG: RegisterProfileBloc: Error saving profile: ${profileResult.message}');
           emit(state.copyWith(
             isLoading: false,
-            registerProfileResponse: Failure(result.message),
+            registerProfileResponse: Failure(profileResult.message),
             isRegisteredProfileSuccess: false,
           ));
           break;
@@ -212,6 +240,63 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
         registerProfileResponse: Failure(e.toString()),
       ));
     }
+  }
+
+  Future<void> _createVehicle(Emitter<RegisterProfileState> emit) async {
+    try {
+      // Generar VIN aleatorio
+      final vin = _generateRandomVin();
+
+      final vehicle = Vehicle(
+        brand: state.vehicleBrand,
+        model: state.vehicleModel,
+        year: state.vehicleYear,
+        status: EVehicleStatus.active,
+        vin: vin,
+        licensePlate: state.vehicleLicensePlate,
+        ownerId: state.user?.id ?? '',
+      );
+
+      final vehicleResult = await vehicleRepository.createVehicle(vehicle);
+
+      switch (vehicleResult) {
+        case Success<Vehicle>():
+          log('TAG: RegisterProfileBloc: Vehicle created successfully: ${vehicleResult.data.licensePlate}');
+          emit(state.copyWith(
+            isLoading: false,
+            registerProfileResponse: const Success(null),
+            isRegisteredProfileSuccess: true,
+          ));
+          break;
+        case Failure<Vehicle>():
+          log('TAG: RegisterProfileBloc: Error creating vehicle: ${vehicleResult.message}');
+          // Aunque falle el vehículo, el perfil ya se guardó exitosamente
+          emit(state.copyWith(
+            isLoading: false,
+            registerProfileResponse: const Success(null),
+            isRegisteredProfileSuccess: true,
+          ));
+          break;
+        case Loading<Vehicle>():
+          break;
+      }
+    } catch (e) {
+      log('TAG: RegisterProfileBloc: Error creating vehicle: $e');
+      // Aunque falle el vehículo, el perfil ya se guardó exitosamente
+      emit(state.copyWith(
+        isLoading: false,
+        registerProfileResponse: const Success(null),
+        isRegisteredProfileSuccess: true,
+      ));
+    }
+  }
+
+  String _generateRandomVin() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        17, (_) => chars.codeUnitAt(random.nextInt(chars.length))
+    ));
   }
 
   void _onOpenDialogToAddNewSchedule(OpenDialogToAddNewSchedule event, Emitter<RegisterProfileState> emit) {
