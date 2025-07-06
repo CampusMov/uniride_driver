@@ -10,6 +10,11 @@ import 'package:uniride_driver/features/auth/domain/repositories/auth_repository
 import 'package:uniride_driver/features/auth/domain/repositories/user_repository.dart';
 import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
+import 'package:uniride_driver/features/home/data/datasources/carpool_service_impl.dart';
+import 'package:uniride_driver/features/home/data/repositories/carpool_repository_impl.dart';
+import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
+import 'package:uniride_driver/features/home/domain/services/carpool_service.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
 
 import '../../features/file/data/datasources/file_management_service_impl.dart';
@@ -85,7 +90,6 @@ Future<void> init() async {
         () => UserRepositoryImpl(userLocalService: sl()),
   );
 
-
   // Data sources
   sl.registerLazySingleton<AuthService>(
         () => AuthServiceImpl(
@@ -93,10 +97,6 @@ Future<void> init() async {
       baseUrl: '${ApiConstants.baseUrl}${ApiConstants.authServiceName}',
     ),
   );
-
-
-
-
 
   sl.registerLazySingleton<UserLocalService>(
         () => UserLocalServiceImpl(databaseHelper: sl()),
@@ -135,6 +135,27 @@ Future<void> init() async {
       fileManagementRepository: sl<FileManagementRepository>(),
       locationRepository: sl<LocationRepository>(),
       vehicleRepository: sl<VehicleRepository>(),
+    ),
+  );
+
+  //! Features - Carpool
+  // Repositories
+  sl.registerLazySingleton<CarpoolRepository>(
+        () => CarpoolRepositoryImpl(carpoolService: sl()),
+  );
+
+  // Services
+  sl.registerLazySingleton<CarpoolService>(
+        () => CarpoolServiceImpl(
+      client: sl(),
+      baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
+    ),
+  );
+
+  sl.registerLazySingleton<CreateCarpoolBloc>(
+        () => CreateCarpoolBloc(
+      carpoolRepository: sl<CarpoolRepository>(),
+      userRepository: sl<UserRepository>(),
     ),
   );
 
