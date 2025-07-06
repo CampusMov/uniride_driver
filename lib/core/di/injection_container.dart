@@ -1,4 +1,3 @@
-
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:uniride_driver/core/constants/api_constants.dart';
@@ -156,6 +155,7 @@ Future<void> init() async {
         () => CreateCarpoolBloc(
       carpoolRepository: sl<CarpoolRepository>(),
       userRepository: sl<UserRepository>(),
+      profileClassScheduleRepository: sl<ProfileClassScheduleRepository>(),
     ),
   );
 
@@ -164,4 +164,3 @@ Future<void> init() async {
     sl.registerLazySingleton(() => http.Client());
   }
 }
-
