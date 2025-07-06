@@ -85,6 +85,7 @@ Future<void> init() async {
         () => UserRepositoryImpl(userLocalService: sl()),
   );
 
+
   // Data sources
   sl.registerLazySingleton<AuthService>(
         () => AuthServiceImpl(
@@ -92,6 +93,10 @@ Future<void> init() async {
       baseUrl: '${ApiConstants.baseUrl}${ApiConstants.authServiceName}',
     ),
   );
+
+
+
+
 
   sl.registerLazySingleton<UserLocalService>(
         () => UserLocalServiceImpl(databaseHelper: sl()),

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/pages/home_page.dart';
 import '../../../auth/presentation/pages/enter_institutional_email_page.dart';
 import '../../../shared/utils/widgets/circle_indicator.dart';
 import '../../../shared/utils/widgets/default_rounded_text_button.dart';
@@ -117,7 +122,16 @@ class WelcomeView extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const EnterInstitutionalEmailPage()),
+                          //Modifique el la routa para entrar mas facil al home Brayan Eliminar
+                          MaterialPageRoute(builder: (context) => BlocProvider(
+                              create: (context) => SelectLocationBloc(),
+                              child: BlocProvider(
+                                create: (context) => MapBloc(),
+                                child: BlocProvider(
+                                  create: (context)=> FavoritesBloc(),
+                                  child: const HomePage())
+                              ),
+                            ),),
                         );
                       },
                     ),

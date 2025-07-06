@@ -15,6 +15,8 @@ class ColorPaletter {
   static final Color textTertiary = Color(0xFFA2B9E4);
   static final Color subText =  Color(0xFF969497);
 
+  static final Color iconBtnHome =  Color.fromARGB(255, 255, 255, 255);
+  static final Color btnHome =  Color.fromARGB(255, 38, 38, 38);
 
 
   static final Color error = Color(0xFFD32F2F);
