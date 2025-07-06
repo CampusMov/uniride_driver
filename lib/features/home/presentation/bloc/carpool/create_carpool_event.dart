@@ -78,6 +78,11 @@ class SaveCarpool extends CreateCarpoolEvent {
   const SaveCarpool();
 }
 
+// Clear carpool creation result
+class ClearCarpoolCreationResult extends CreateCarpoolEvent {
+  const ClearCarpoolCreationResult();
+}
+
 // Select class schedule events
 class OpenDialogToSelectClassSchedule extends CreateCarpoolEvent {
   const OpenDialogToSelectClassSchedule();

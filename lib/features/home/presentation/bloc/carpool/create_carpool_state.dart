@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:uniride_driver/features/home/domain/entities/carpool.dart';
 import 'package:uniride_driver/features/profile/domain/entities/class_schedule.dart';
 import 'package:uniride_driver/features/profile/domain/entities/vehicle.dart';
+import 'package:uniride_driver/core/utils/resource.dart';
 
 import '../../../../shared/domain/entities/location.dart';
 import '../../../domain/entities/place_prediction.dart';
@@ -26,6 +27,9 @@ class CreateCarpoolState extends Equatable {
   final String classScheduleSearchQuery;
   final bool isLoadingClassSchedules;
 
+  // Carpool creation result
+  final Resource<Carpool>? carpoolCreationResult;
+
   const CreateCarpoolState({
     this.user,
     this.vehicle,
@@ -41,6 +45,7 @@ class CreateCarpoolState extends Equatable {
     this.filteredClassSchedules = const [],
     this.classScheduleSearchQuery = '',
     this.isLoadingClassSchedules = false,
+    this.carpoolCreationResult,
   });
 
   Carpool toDomain() {
@@ -96,6 +101,7 @@ class CreateCarpoolState extends Equatable {
     List<ClassSchedule>? filteredClassSchedules,
     String? classScheduleSearchQuery,
     bool? isLoadingClassSchedules,
+    Resource<Carpool>? carpoolCreationResult,
   }) {
     return CreateCarpoolState(
       user: user ?? this.user,
@@ -112,6 +118,7 @@ class CreateCarpoolState extends Equatable {
       filteredClassSchedules: filteredClassSchedules ?? this.filteredClassSchedules,
       classScheduleSearchQuery: classScheduleSearchQuery ?? this.classScheduleSearchQuery,
       isLoadingClassSchedules: isLoadingClassSchedules ?? this.isLoadingClassSchedules,
+      carpoolCreationResult: carpoolCreationResult ?? this.carpoolCreationResult,
     );
   }
 
@@ -131,5 +138,6 @@ class CreateCarpoolState extends Equatable {
     filteredClassSchedules,
     classScheduleSearchQuery,
     isLoadingClassSchedules,
+    carpoolCreationResult,
   ];
 }

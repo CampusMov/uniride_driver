@@ -14,6 +14,7 @@ import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_ca
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_event.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_state.dart';
 
+import '../../../../core/utils/resource.dart';
 import '../widgets/class_schedule_selection_dialog.dart';
 import '../widgets/origin_location_selection_dialog.dart';
 // Crear el archivo: lib/features/home/presentation/widgets/class_schedule_selection_dialog.dart
@@ -74,7 +75,43 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
         elevation: 0,
       ) : null,
       body: SafeArea(
-        child: BlocBuilder<CreateCarpoolBloc, CreateCarpoolState>(
+        child: BlocConsumer<CreateCarpoolBloc, CreateCarpoolState>(
+          listener: (context, state) {
+            // Manejar el éxito de la creación del carpool
+            if (state.carpoolCreationResult != null) {
+              if (state.carpoolCreationResult is Success) {
+                // Carpool creado exitosamente
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('¡Carpool creado exitosamente!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+
+                // Cambiar al modo "Iniciar"
+                setState(() {
+                  _isCreateMode = false;
+                });
+
+                // Notificar al padre que el modo cambió
+                widget.onModeChanged?.call(true); // true = carpool iniciado
+
+              } else if (state.carpoolCreationResult is Failure) {
+                // Error al crear carpool
+                final failure = state.carpoolCreationResult as Failure;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al crear carpool: ${failure.message}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+
+              // Limpiar el resultado después de procesarlo
+              context.read<CreateCarpoolBloc>()
+                  .add(const ClearCarpoolCreationResult());
+            }
+          },
           builder: (context, state) {
             return Stack(
               children: [
@@ -288,11 +325,27 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                         child: ElevatedButton(
                           onPressed: (){
                             if (_isCreateMode) {
-                              setState(() {
-                                _isCreateMode = false;
-                              });
-                              // Notificar al padre que el modo cambió
-                              widget.onModeChanged?.call(true); // true = carpool iniciado
+                              // Validar que todos los campos estén completos antes de crear
+                              if (!state.isValidCarpool) {
+                                String missingFields = '';
+                                if (state.classSchedule == null) missingFields += '• Seleccionar clase\n';
+                                if (state.originLocation == null) missingFields += '• Seleccionar punto de partida\n';
+                                if (state.user == null) missingFields += '• Usuario no cargado\n';
+                                if (state.vehicle == null) missingFields += '• Vehículo no registrado\n';
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Faltan campos requeridos:\n$missingFields'),
+                                    backgroundColor: Colors.red,
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // Crear el carpool usando el repository
+                              context.read<CreateCarpoolBloc>()
+                                  .add(const SaveCarpool());
                             } else {
                               //Cambiar ruta al presionar boton
                               widget.onNavigateToDetails?.call();
@@ -308,7 +361,16 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                           },
                           style: BtnStylePaletter.primary,
 
-                          child: Text(_isCreateMode ? "Crear Carpool" : "Iniciar Carpool",
+                          child: state.isLoading
+                              ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: ColorPaletter.buttonText,
+                              strokeWidth: 2,
+                            ),
+                          )
+                              : Text(_isCreateMode ? "Crear Carpool" : "Iniciar Carpool",
                             style: TextStylePaletter.button,
                           ),
                         ),

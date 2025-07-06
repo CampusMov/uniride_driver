@@ -37,6 +37,7 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
     on<ClassScheduleChanged>(_onClassScheduleChanged);
     on<OriginLocationChanged>(_onOriginLocationChanged);
     on<SaveCarpool>(_onSaveCarpool);
+    on<ClearCarpoolCreationResult>(_onClearCarpoolCreationResult);
 
     // Class Schedule Dialog Events
     on<OpenDialogToSelectClassSchedule>(_onOpenDialogToSelectClassSchedule);
@@ -269,19 +270,33 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
     ));
   }
 
+  void _onClearCarpoolCreationResult(ClearCarpoolCreationResult event, Emitter<CreateCarpoolState> emit) {
+    emit(state.copyWith(carpoolCreationResult: null));
+  }
+
   Future<void> _onSaveCarpool(SaveCarpool event, Emitter<CreateCarpoolState> emit) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(
+      isLoading: true,
+      carpoolCreationResult: null, // Reset previous result
+    ));
 
     try {
       final result = await carpoolRepository.createCarpool(state.toDomain());
+
       switch (result) {
         case Success<Carpool>():
-          log('TAG: CreateCarpoolBloc: Carpool created successfully');
-          emit(state.copyWith(isLoading: false));
+          log('TAG: CreateCarpoolBloc: Carpool created successfully: ${result.data.id}');
+          emit(state.copyWith(
+            isLoading: false,
+            carpoolCreationResult: result,
+          ));
           break;
         case Failure<Carpool>():
           log('TAG: CreateCarpoolBloc: Failed to create carpool: ${result.message}');
-          emit(state.copyWith(isLoading: false));
+          emit(state.copyWith(
+            isLoading: false,
+            carpoolCreationResult: result,
+          ));
           break;
         case Loading<Carpool>():
           log('TAG: CreateCarpoolBloc: Creating carpool...');
@@ -289,7 +304,10 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
       }
     } catch (e) {
       log('TAG: CreateCarpoolBloc: Error saving carpool: $e');
-      emit(state.copyWith(isLoading: false));
+      emit(state.copyWith(
+        isLoading: false,
+        carpoolCreationResult: Failure('Error inesperado: ${e.toString()}'),
+      ));
     }
   }
 }
