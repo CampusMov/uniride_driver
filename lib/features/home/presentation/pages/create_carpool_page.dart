@@ -167,71 +167,49 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 10),
-
-                      //Selecciona el lugar de destino
-                      if(!_isCreateMode)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Icon(Icons.adjust, color: ColorPaletter.textPrimary),
-                                  SizedBox(width: 10),
-                                  //Escucha el evento de pulsar clic en una opcion de posibles lugares y reconstruye la pagina
-                                  Expanded(
-                                    child: BlocListener<SelectLocationBloc,SelectLocationState>(
-                                      listener: (context,state){
-                                        if (state is SelectLocationLoadesDestination) {
-                                          setState(() {
-                                            destinationPosition = LatLng(
-                                                double.parse(state.locationDestination.latitude),
-                                                double.parse(state.locationDestination.longitude));
-
-                                            _selectedDestination = state.locationDestination.address;
-                                            //Evento de prueba para dibujar en mapa
-
-                                            context.read<MapBloc>().add(InitialMap(
-                                              destinationPosition: destinationPosition!,
-                                              initialPosition: initialPosition!,)
-
-                                            );
-                                          });
-                                        }
-                                      },
-                                      child: Text(
-                                        _selectedDestination ?? "Selecciona lugar de Destino",
-                                        style: TextStylePaletter.body,
-                                        softWrap: true,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            //Destino
-                            ElevatedButton(
-                              onPressed: (){
-                                widget.onTap(false);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorPaletter.inputField, // Color de fondo
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8), // Borde redondeado
-                                ),
-                                minimumSize: Size(70, 30), // Tamaño mínimo del botón
-                              ),
-                              child: Text(
-                                "Destino",
-                                style: TextStylePaletter.body,
-                              ),
-                            ),
-                          ],
-                        ),
 
                       SizedBox(height: 20),
 
+                      // Mostrar la clase seleccionada cuando no está en modo crear
+                      if(!_isCreateMode && state.classSchedule != null)
+                        Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: ColorPaletter.inputField,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.school, color: ColorPaletter.textPrimary),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      state.classSchedule!.courseName,
+                                      style: TextStylePaletter.textOptions,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      state.classSchedule!.scheduleTime(),
+                                      style: TextStylePaletter.subTextOptions.copyWith(
+                                        color: ColorPaletter.textSecondary,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      state.classSchedule!.locationName,
+                                      style: TextStylePaletter.spam,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Selector de clase cuando está en modo crear
                       if(_isCreateMode)
                         GestureDetector(
                           onTap: () {
@@ -265,7 +243,7 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                           ),
                         ),
 
-                      // Show class schedule details if selected
+                      // Show class schedule details if selected in create mode
                       if(_isCreateMode && state.classSchedule != null)
                         Container(
                           margin: const EdgeInsets.only(top: 8.0),
