@@ -15,6 +15,7 @@ import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_ca
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_state.dart';
 
 import '../widgets/class_schedule_selection_dialog.dart';
+import '../widgets/origin_location_selection_dialog.dart';
 // Crear el archivo: lib/features/home/presentation/widgets/class_schedule_selection_dialog.dart
 // Y usar este import:
 // import 'package:uniride_driver/features/home/presentation/widgets/class_schedule_selection_dialog.dart';
@@ -83,56 +84,51 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       //Selecciona el lugar de partida
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Icon(Icons.adjust, color: ColorPaletter.textPrimary),
-                                SizedBox(width: 10),
-                                //Escucha el evento de selecionar un lugar de origen y cambia de valor el
-                                Expanded(
-                                  child: BlocListener<SelectLocationBloc,SelectLocationState>(
-                                    listener: (context,state){
-                                      if (state is SelectLocationLoadesOrigin) {
-                                        setState(() {
-                                          initialPosition = LatLng(
-                                              double.parse(state.locationOrigin.latitude),
-                                              double.parse(state.locationOrigin.longitude));
-
-                                          _selectedOrigin = state.locationOrigin.address;
-                                        });
-                                      }
-                                    },
+                      GestureDetector(
+                        onTap: () {
+                          context.read<CreateCarpoolBloc>()
+                              .add(const OpenDialogToSelectOriginLocation());
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Icon(Icons.adjust, color: ColorPaletter.textPrimary),
+                                  SizedBox(width: 10),
+                                  Expanded(
                                     child: Text(
-                                      _selectedOrigin ?? "Selecciona lugar de Inicio",
-                                      style: TextStylePaletter.body,
+                                      state.originLocation?.address ?? "Selecciona lugar de Inicio",
+                                      style: state.originLocation != null
+                                          ? TextStylePaletter.body
+                                          : TextStylePaletter.body.copyWith(color: ColorPaletter.textSecondary),
                                       softWrap: true,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          ElevatedButton(
-                            onPressed:(){
-                              widget.onTap(true);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorPaletter.inputField,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                ],
                               ),
-                              minimumSize: Size(70, 30),
                             ),
-                            child: Text(
-                              "Partida",
-                              style: TextStylePaletter.body,
+
+                            ElevatedButton(
+                              onPressed: () {
+                                context.read<CreateCarpoolBloc>()
+                                    .add(const OpenDialogToSelectOriginLocation());
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: ColorPaletter.inputField,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                minimumSize: Size(70, 30),
+                              ),
+                              child: Text(
+                                "Partida",
+                                style: TextStylePaletter.body,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       SizedBox(height: 10),
 
@@ -324,6 +320,10 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                 // Class Schedule Dialog Overlay
                 if (state.isSelectClassScheduleDialogOpen)
                   const ClassScheduleSelectionDialog(),
+
+                // Origin Location Dialog Overlay
+                if (state.isSelectOriginLocationDialogOpen)
+                  const OriginLocationSelectionDialog(),
               ],
             );
           },
