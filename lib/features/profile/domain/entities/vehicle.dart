@@ -13,7 +13,7 @@ class Vehicle extends Equatable {
   final String ownerId;
 
   const Vehicle({
-    this.id = '',
+    this.id = '1',
     required this.brand,
     required this.model,
     required this.year,

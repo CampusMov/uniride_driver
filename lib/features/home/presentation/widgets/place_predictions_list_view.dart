@@ -9,7 +9,6 @@ import 'package:uniride_driver/features/home/presentation/bloc/select_location/s
 
 class PlacePredictionsListView extends StatelessWidget {
   const PlacePredictionsListView({super.key, required this.predictions, required this.isMode});
-  
 
   final List<Prediction> predictions;
   final bool isMode;
@@ -50,11 +49,10 @@ class PlacePredictionsListView extends StatelessWidget {
                 ),
                 title: Text(prediction.description, style: TextStylePaletter.subTextOptions,),
                 onTap: () {
-                  // Creamo evento para obtener las coordenadas de la dirección seleccionada
-                  isMode ? 
-                  context.read<SelectLocationBloc>().add(GetLocationOrigin(address: prediction.description)) :
-                  context.read<SelectLocationBloc>().add(GetLocationDestination(address: prediction.description));
-                  //context.read<SelectLocationBloc>().add(UpdateSelecLocation(location: prediction.description));
+                  isMode ?
+                  context.read<SelectLocationBloc>().add(GetLocationOriginByPlaceId(placeId: prediction.placeId)) :
+                  context.read<SelectLocationBloc>().add(GetLocationDestinationByPlaceId(placeId: prediction.placeId));
+
                   Navigator.of(context).pop();
                 },
 
