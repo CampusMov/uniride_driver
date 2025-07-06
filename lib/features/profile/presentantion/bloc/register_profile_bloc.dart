@@ -322,7 +322,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
 
   void _onScheduleLocationSelected(ScheduleLocationSelected event, Emitter<RegisterProfileState> emit) async {
     try {
-      final location = await locationRepository.getLocation(event.placePrediction.description);
+      final location = await locationRepository.getLocationByPlaceId(event.placePrediction.placeId);
 
       if (location != null) {
         final selectedLocation = Location(
@@ -332,7 +332,8 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
           address: location.address,
         );
 
-        log('TAG: RegisterProfileBloc: Location selected: ${selectedLocation.address}');
+        log('TAG: RegisterProfileBloc: Location selected via Place Details: ${selectedLocation.address}');
+        log('TAG: RegisterProfileBloc: Coordinates: ${selectedLocation.latitude}, ${selectedLocation.longitude}');
 
         emit(state.copyWith(
           currentClassScheduleState: state.currentClassScheduleState.copyWith(
@@ -341,7 +342,7 @@ class RegisterProfileBloc extends Bloc<RegisterProfileEvent, RegisterProfileStat
           locationPredictions: [],
         ));
       } else {
-        log('TAG: RegisterProfileBloc: Could not get location details');
+        log('TAG: RegisterProfileBloc: Could not get location details from Place Details API');
       }
     } catch (e) {
       log('TAG: RegisterProfileBloc: Error getting place details: $e');
