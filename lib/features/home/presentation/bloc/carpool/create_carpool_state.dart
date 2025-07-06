@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:uniride_driver/features/home/domain/entities/carpool.dart';
 import 'package:uniride_driver/features/profile/domain/entities/class_schedule.dart';
 import 'package:uniride_driver/features/profile/domain/entities/vehicle.dart';
+import 'package:uniride_driver/core/utils/resource.dart';
 
 import '../../../../shared/domain/entities/location.dart';
 import '../../../domain/entities/place_prediction.dart';
@@ -20,6 +21,15 @@ class CreateCarpoolState extends Equatable {
   final bool isSelectOriginLocationDialogOpen;
   final bool isSelectClassScheduleDialogOpen;
 
+  // Class Schedule Dialog Properties
+  final List<ClassSchedule> allClassSchedules;
+  final List<ClassSchedule> filteredClassSchedules;
+  final String classScheduleSearchQuery;
+  final bool isLoadingClassSchedules;
+
+  // Carpool creation result
+  final Resource<Carpool>? carpoolCreationResult;
+
   const CreateCarpoolState({
     this.user,
     this.vehicle,
@@ -31,6 +41,11 @@ class CreateCarpoolState extends Equatable {
     this.locationPredictions = const [],
     this.isSelectOriginLocationDialogOpen = false,
     this.isSelectClassScheduleDialogOpen = false,
+    this.allClassSchedules = const [],
+    this.filteredClassSchedules = const [],
+    this.classScheduleSearchQuery = '',
+    this.isLoadingClassSchedules = false,
+    this.carpoolCreationResult,
   });
 
   Carpool toDomain() {
@@ -54,23 +69,22 @@ class CreateCarpoolState extends Equatable {
   }
 
   bool get isValidCarpool =>
-    user!= null &&
-    user?.id != '' &&
-    vehicle != null &&
-    vehicle?.id != '' &&
-    isValidMaxPassengers &&
-    classSchedule != null &&
-    isValidRadius &&
-    originLocation != null;
+      user!= null &&
+          user?.id != '' &&
+          vehicle != null &&
+          vehicle?.id != '' &&
+          isValidMaxPassengers &&
+          classSchedule != null &&
+          isValidRadius &&
+          originLocation != null;
 
   bool get isValidMaxPassengers =>
-    maxPassengers > 0 &&
-    maxPassengers <= 4;
-
+      maxPassengers > 0 &&
+          maxPassengers <= 4;
 
   bool get isValidRadius =>
-    radius > 0 &&
-    radius <= 100;
+      radius > 0 &&
+          radius <= 100;
 
   CreateCarpoolState copyWith({
     User? user,
@@ -83,6 +97,11 @@ class CreateCarpoolState extends Equatable {
     List<Prediction>? locationPredictions,
     bool? isSelectOriginLocationDialogOpen,
     bool? isSelectClassScheduleDialogOpen,
+    List<ClassSchedule>? allClassSchedules,
+    List<ClassSchedule>? filteredClassSchedules,
+    String? classScheduleSearchQuery,
+    bool? isLoadingClassSchedules,
+    Resource<Carpool>? carpoolCreationResult,
   }) {
     return CreateCarpoolState(
       user: user ?? this.user,
@@ -95,6 +114,11 @@ class CreateCarpoolState extends Equatable {
       locationPredictions: locationPredictions ?? this.locationPredictions,
       isSelectOriginLocationDialogOpen: isSelectOriginLocationDialogOpen ?? this.isSelectOriginLocationDialogOpen,
       isSelectClassScheduleDialogOpen: isSelectClassScheduleDialogOpen ?? this.isSelectClassScheduleDialogOpen,
+      allClassSchedules: allClassSchedules ?? this.allClassSchedules,
+      filteredClassSchedules: filteredClassSchedules ?? this.filteredClassSchedules,
+      classScheduleSearchQuery: classScheduleSearchQuery ?? this.classScheduleSearchQuery,
+      isLoadingClassSchedules: isLoadingClassSchedules ?? this.isLoadingClassSchedules,
+      carpoolCreationResult: carpoolCreationResult ?? this.carpoolCreationResult,
     );
   }
 
@@ -110,5 +134,10 @@ class CreateCarpoolState extends Equatable {
     locationPredictions,
     isSelectOriginLocationDialogOpen,
     isSelectClassScheduleDialogOpen,
+    allClassSchedules,
+    filteredClassSchedules,
+    classScheduleSearchQuery,
+    isLoadingClassSchedules,
+    carpoolCreationResult,
   ];
 }

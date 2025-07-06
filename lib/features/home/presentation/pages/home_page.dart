@@ -11,6 +11,9 @@ import 'package:uniride_driver/features/home/presentation/pages/request_passenge
 import 'package:uniride_driver/features/home/presentation/widgets/btns_adduser_and_location_view.dart';
 import 'package:uniride_driver/features/home/presentation/widgets/map_view.dart';
 import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
+import 'package:uniride_driver/core/di/injection_container.dart' as di;
+
+import '../bloc/carpool/create_carpool_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,13 +33,9 @@ class _HomePageState extends State<HomePage> {
   bool _isNavigating = false; // Estado para mostrar carga durante navegación
   bool _isCarpoolStarted = false; // Estado para mantener si el carpool fue iniciado
 
-
   @override
   void initState() {
-    
     super.initState();
-    
-
   }
 
   // Método para navegar con carga
@@ -44,13 +43,13 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isNavigating = true;
     });
-    
+
     // Simular carga pequeña
     await Future.delayed(Duration(milliseconds: 500));
-    
+
     // Navegar a la nueva página
     _panelNavigatorKey.currentState?.pushNamed(routeName);
-    
+
     setState(() {
       _isNavigating = false;
     });
@@ -61,13 +60,13 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isNavigating = true;
     });
-    
+
     // Simular carga pequeña
     await Future.delayed(Duration(milliseconds: 500));
-    
+
     // Navegar a la página de detalles
     _panelNavigatorKey.currentState?.pushNamed('/details_carpool');
-    
+
     setState(() {
       _isNavigating = false;
     });
@@ -77,171 +76,164 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       //Menu de la aplicacion
-
-      body: Stack( 
+      body: Stack(
         children: [
-           BlocBuilder<MapBloc,MapState>(
-            builder: (context,state){
-              if(state is InitialState){
-                
-                return MapViewWidget(
-                  markers: {},
-                  polylines: {},
-                );
+          BlocBuilder<MapBloc,MapState>(
+              builder: (context,state){
+                if(state is InitialState){
 
-              }
-              else if (state is LoadingState){
-                return Center(
+                  return MapViewWidget(
+                    markers: {},
+                    polylines: {},
+                  );
+
+                }
+                else if (state is LoadingState){
+                  return Center(
                     child: CircularProgressIndicator(
                       color: ColorPaletter.background,
                     ),
-                );
-              } else if(state is LoadedState){
-                 return MapViewWidget(
-                  markers: state.markers,
-                  polylines: state.polylines,);
-              } else if(state is ErrorState){
-                return Center(
-                  child: Text("Error al cargar el mapa", style: TextStyle(color: ColorPaletter.textPrimary)),
+                  );
+                } else if(state is LoadedState){
+                  return MapViewWidget(
+                    markers: state.markers,
+                    polylines: state.polylines,);
+                } else if(state is ErrorState){
+                  return Center(
+                    child: Text("Error al cargar el mapa", style: TextStyle(color: ColorPaletter.textPrimary)),
+                  );
+                }
+                return Container(
+                  color: ColorPaletter.error,
                 );
               }
-              return Container(
-                color: ColorPaletter.error,
-              );
-          }
-        ),
-          
+          ),
+
           //Btns de accion flotante para aceptar o rechazar solicitudes de viaje
           //y mi ubicacion
           BtnsAddUserAndLocationView(
-            onTapUser: (){
-              _navigateWithLoading('/request_passengers');
+              onTapUser: (){
+                _navigateWithLoading('/request_passengers');
 
-            }, 
-            onTapLocation: (){
-              //Poner evento para que el mapa se centre en mi ubicacion
-            }
-          ),
-          
-          
-          
-           // Panel deslizante
-          SlidingUpPanelWidget(
-            controlHeight: _controlHeight, 
-            anchor: 0.4, 
-            panelController: panelController,
-            enableOnTap: true,
-            onTap: () {
-              if (panelController.status == SlidingUpPanelStatus.expanded) {
-                panelController.collapse();
-              } else {
-                panelController.expand();
+              },
+              onTapLocation: (){
+                //Poner evento para que el mapa se centre en mi ubicacion
               }
-            },
-
-            child: Container(
-              decoration: BoxDecoration(
-                color: ColorPaletter.background,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Navigator(
-                  key: _panelNavigatorKey,
-                  onGenerateRoute: (settings) {
-                    Widget page;
-                    switch (settings.name) {
-                      case '/create_carpool':
-                        page = CreateCarpoolPage(
-                          isInitiallyStarted: _isCarpoolStarted,
-                          onModeChanged: (started) {
-                            setState(() {
-                              _isCarpoolStarted = started;
-                            });
-                          },
-                          onNavigateToDetails: () {
-                            _navigateToDetails();
-                          },
-                          onTap: (value) {
-                            
-                            debugPrint("onTap: $value");
-                            
-                            //Deacuerdo al valor devuelto por el ontap me lleva a la vista de origin o destination
-                            //True significa que se selecciona el origen, false el destino
-                            
-                            value ? debugPrint("Seleccionar origen") :
-                            debugPrint("Seleccionar destino");
-
-                            // Usar navegación con carga
-                            value ? _navigateWithLoading('/position_selection_origin') :
-                            _navigateWithLoading('/position_selection_destination');
-
-                          },
-                          
-                        );
-                        break;
-                      case '/request_passengers':
-                        page = RequestPassengersPage(
-                          
-                        );
-                        break;
-                      case '/details_carpool':
-                        page = CarpoolDetailsPage();
-                        break;
-                      case '/position_selection_origin':
-                        page = PositionSelectionPageOrigin(
-                          onTap: (){
-                            // Navegar a la página de creación de carpool con carga
-                            _navigateWithLoading('/create_carpool');
-                          }
-                        );
-                        break;
-                      case '/position_selection_destination':
-                        page = PositionSelectionPageDestination(
-                          onTap: (){
-                            // Navegar a la página de creación de carpool con carga
-                            _navigateWithLoading('/create_carpool');
-                          }
-                        );
-                        break;
-                      default:
-                        page = CreateCarpoolPage(
-                          isInitiallyStarted: _isCarpoolStarted,
-                          onModeChanged: (started) {
-                            setState(() {
-                              _isCarpoolStarted = started;
-                            });
-                          },
-                          onNavigateToDetails: () {
-                            _navigateToDetails();
-                          },
-                          onTap: (value) {
-                            debugPrint("onTap: $value");
-                            
-                            value ? debugPrint("Seleccionar origen") :
-                            debugPrint("Seleccionar destino");
-
-                            // Usar navegación con carga
-                            value ? _navigateWithLoading('/position_selection_origin') :
-                            _navigateWithLoading('/position_selection_destination');
-                          }
-                          
-                        );
-                    }
-                    return MaterialPageRoute(builder: (_) => page);
-                  },
-                ),
-              ),
-            )
           ),
-        
-          // Overlay de carga durante navegación
-         
 
+          // Panel deslizante
+          SlidingUpPanelWidget(
+              controlHeight: _controlHeight,
+              anchor: 0.4,
+              panelController: panelController,
+              enableOnTap: true,
+              onTap: () {
+                if (panelController.status == SlidingUpPanelStatus.expanded) {
+                  panelController.collapse();
+                } else {
+                  panelController.expand();
+                }
+              },
+
+              child: Container(
+                decoration: BoxDecoration(
+                  color: ColorPaletter.background,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Navigator(
+                    key: _panelNavigatorKey,
+                    onGenerateRoute: (settings) {
+                      Widget page;
+                      switch (settings.name) {
+                        case '/create_carpool':
+                          page = BlocProvider<CreateCarpoolBloc>(
+                            create: (context) => di.sl<CreateCarpoolBloc>(),
+                            child: CreateCarpoolPage(
+                              isInitiallyStarted: _isCarpoolStarted,
+                              onModeChanged: (started) {
+                                setState(() {
+                                  _isCarpoolStarted = started;
+                                });
+                              },
+                              onNavigateToDetails: () {
+                                _navigateToDetails();
+                              },
+                              onTap: (value) {
+
+                                debugPrint("onTap: $value");
+
+                                //Deacuerdo al valor devuelto por el ontap me lleva a la vista de origin o destination
+                                //True significa que se selecciona el origen, false el destino
+
+                                value ? debugPrint("Seleccionar origen") :
+                                debugPrint("Seleccionar destino");
+
+                                // Usar navegación con carga
+                                value ? _navigateWithLoading('/position_selection_origin') :
+                                _navigateWithLoading('/position_selection_destination');
+
+                              },
+                            ),
+                          );
+                          break;
+                        case '/request_passengers':
+                          page = RequestPassengersPage();
+                          break;
+                        case '/details_carpool':
+                          page = CarpoolDetailsPage();
+                          break;
+                        case '/position_selection_origin':
+                          page = PositionSelectionPageOrigin(
+                              onTap: (){
+                                // Navegar a la página de creación de carpool con carga
+                                _navigateWithLoading('/create_carpool');
+                              }
+                          );
+                          break;
+                        case '/position_selection_destination':
+                          page = PositionSelectionPageDestination(
+                              onTap: (){
+                                // Navegar a la página de creación de carpool con carga
+                                _navigateWithLoading('/create_carpool');
+                              }
+                          );
+                          break;
+                        default:
+                          page = BlocProvider<CreateCarpoolBloc>(
+                            create: (context) => di.sl<CreateCarpoolBloc>(),
+                            child: CreateCarpoolPage(
+                                isInitiallyStarted: _isCarpoolStarted,
+                                onModeChanged: (started) {
+                                  setState(() {
+                                    _isCarpoolStarted = started;
+                                  });
+                                },
+                                onNavigateToDetails: () {
+                                  _navigateToDetails();
+                                },
+                                onTap: (value) {
+                                  debugPrint("onTap: $value");
+
+                                  value ? debugPrint("Seleccionar origen") :
+                                  debugPrint("Seleccionar destino");
+
+                                  // Usar navegación con carga
+                                  value ? _navigateWithLoading('/position_selection_origin') :
+                                  _navigateWithLoading('/position_selection_destination');
+                                }
+                            ),
+                          );
+                      }
+                      return MaterialPageRoute(builder: (_) => page);
+                    },
+                  ),
+                ),
+              )
+          ),
         ],
       ),
-      
-      
     );
   }
 }
