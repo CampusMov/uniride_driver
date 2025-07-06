@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/core/theme/color_paletter.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/map/map_event.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_state.dart';
 import 'package:uniride_driver/features/home/presentation/pages/create_carpool_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/details_carpool_page.dart';
@@ -174,6 +175,10 @@ class _HomePageState extends State<HomePage> {
                                 value ? _navigateWithLoading('/position_selection_origin') :
                                 _navigateWithLoading('/position_selection_destination');
 
+                              },
+                              onRouteRequest: (routeRequest) {
+                                context.read<MapBloc>()
+                                    .add(GetRoute(routeRequestModel: routeRequest));
                               },
                             ),
                           );
