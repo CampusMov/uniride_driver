@@ -156,6 +156,7 @@ Future<void> init() async {
       carpoolRepository: sl<CarpoolRepository>(),
       userRepository: sl<UserRepository>(),
       profileClassScheduleRepository: sl<ProfileClassScheduleRepository>(),
+      locationRepository: sl<LocationRepository>(),
     ),
   );
 
