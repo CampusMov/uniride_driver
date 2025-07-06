@@ -4,17 +4,29 @@ abstract class SelectLocationEvent {
   const SelectLocationEvent();
 }
 
-//Evento para obtener la coordenadas de una direccion
-// Este evento se dispara cuando el usuario ingresa una direccion
+//Nuevos eventos que usan Place Details API para coordenadas consistentes
+class GetLocationOriginByPlaceId extends SelectLocationEvent {
+  final String placeId;
+  const GetLocationOriginByPlaceId({required this.placeId});
+}
+
+class GetLocationDestinationByPlaceId extends SelectLocationEvent {
+  final String placeId;
+  const GetLocationDestinationByPlaceId({required this.placeId});
+}
+
+//Eventos legacy para obtener la coordenadas de una direccion (deprecados)
+@Deprecated('Use GetLocationOriginByPlaceId for consistent coordinates')
 class GetLocationOrigin extends SelectLocationEvent {
   final String address;
   const GetLocationOrigin({required this.address});
 }
+
+@Deprecated('Use GetLocationDestinationByPlaceId for consistent coordinates')
 class GetLocationDestination extends SelectLocationEvent {
   final String address;
   const GetLocationDestination({required this.address});
 }
-
 
 //Evento de busqueda de ubicaciones
 class SearchOriginLocation extends SelectLocationEvent {
@@ -26,8 +38,6 @@ class SearchDestinationLocation extends SelectLocationEvent {
 
   SearchDestinationLocation({required this.query});
 }
-
-
 
 class SelectLocation extends SelectLocationEvent {
   final LocationApp locationApp;
