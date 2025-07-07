@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/core/theme/color_paletter.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_event.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_state.dart';
 import 'package:uniride_driver/features/home/presentation/pages/create_carpool_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/details_carpool_page.dart';
@@ -12,9 +11,10 @@ import 'package:uniride_driver/features/home/presentation/pages/request_passenge
 import 'package:uniride_driver/features/home/presentation/widgets/btns_adduser_and_location_view.dart';
 import 'package:uniride_driver/features/home/presentation/widgets/map_view.dart';
 import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/core/di/injection_container.dart' as di;
 
-import '../bloc/carpool/create_carpool_bloc.dart';
+import '../bloc/map/map_event.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -118,7 +118,8 @@ class _HomePageState extends State<HomePage> {
 
               },
               onTapLocation: (){
-                //Poner evento para que el mapa se centre en mi ubicacion
+                // Centrar el mapa en la ubicación actual del usuario
+                context.read<MapBloc>().add(const CenterOnUserLocation());
               }
           ),
 
