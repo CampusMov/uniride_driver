@@ -4,12 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uniride_driver/core/theme/btn_style_paletter.dart';
 import 'package:uniride_driver/core/theme/color_paletter.dart';
 import 'package:uniride_driver/core/theme/text_style_paletter.dart';
-import 'package:uniride_driver/core/ui/custom_text_field.dart';
 import 'package:uniride_driver/core/ui/custom_number_input_row.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_event.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_state.dart';
+import 'package:uniride_driver/features/home/data/model/route_request_model.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_event.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_state.dart';
@@ -17,9 +13,6 @@ import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_ca
 import '../../../../core/utils/resource.dart';
 import '../widgets/class_schedule_selection_dialog.dart';
 import '../widgets/origin_location_selection_dialog.dart';
-// Crear el archivo: lib/features/home/presentation/widgets/class_schedule_selection_dialog.dart
-// Y usar este import:
-// import 'package:uniride_driver/features/home/presentation/widgets/class_schedule_selection_dialog.dart';
 
 class CreateCarpoolPage extends StatefulWidget {
   const CreateCarpoolPage({
@@ -28,12 +21,14 @@ class CreateCarpoolPage extends StatefulWidget {
     this.isInitiallyStarted = false,
     this.onModeChanged,
     this.onNavigateToDetails,
+    this.onRouteRequest,
   });
 
   final ValueChanged<bool> onTap;
   final bool isInitiallyStarted;
   final ValueChanged<bool>? onModeChanged;
   final VoidCallback? onNavigateToDetails;
+  final ValueChanged<RouteRequestModel>? onRouteRequest;
 
   @override
   State<CreateCarpoolPage> createState() => _CreateCarpoolPageState();
@@ -60,20 +55,6 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorPaletter.background,
-      appBar: !_isCreateMode ? AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            setState(() {
-              _isCreateMode = true;
-            });
-            // Notificar al padre que el modo cambió de vuelta a crear
-            widget.onModeChanged?.call(false); // false = carpool no iniciado
-          },
-        ),
-        elevation: 0,
-      ) : null,
       body: SafeArea(
         child: BlocConsumer<CreateCarpoolBloc, CreateCarpoolState>(
           listener: (context, state) {
@@ -95,6 +76,14 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
 
                 // Notificar al padre que el modo cambió
                 widget.onModeChanged?.call(true); // true = carpool iniciado
+                widget.onRouteRequest?.call(
+                  RouteRequestModel(
+                      startLatitude : state.originLocation?.latitude ?? 0.0,
+                      startLongitude: state.originLocation?.longitude ?? 0.0,
+                      endLatitude: state.classSchedule?.latitude ?? 0.0,
+                      endLongitude: state.classSchedule?.longitude ?? 0.0
+                  ),
+                );
 
               } else if (state.carpoolCreationResult is Failure) {
                 // Error al crear carpool

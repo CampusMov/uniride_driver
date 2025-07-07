@@ -1,4 +1,5 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:uniride_driver/features/home/data/model/route_request_model.dart';
 
 abstract class MapEvent {
   const MapEvent();
@@ -8,7 +9,7 @@ class InitialMap extends MapEvent{
 
   final LatLng destinationPosition;
   final LatLng initialPosition;
-  
+
   InitialMap({
     required this.destinationPosition,
     required this.initialPosition,
@@ -24,6 +25,14 @@ class AddMarker extends MapEvent{
   const AddMarker(this.position);
 }
 
-class GetLocation extends MapEvent{
+class CenterOnUserLocation extends MapEvent{
+  const CenterOnUserLocation();
+}
 
+class GetRoute extends MapEvent {
+  final RouteRequestModel routeRequestModel;
+
+  const GetRoute({
+    required this.routeRequestModel,
+  });
 }

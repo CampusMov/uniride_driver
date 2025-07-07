@@ -4,26 +4,24 @@ abstract class MapState {
   const MapState();
 }
 class InitialState extends MapState {
-  
+
 }
 
 class LoadingState extends MapState {
-  
+
 }
 
 class LoadedState extends MapState {
   final Set<Marker> markers;
   final Set<Polyline> polylines;
-  
-  
-  //final Map<MarkerId,Marker> _markers ;
+  final LatLng? centerPosition;
 
-  //Carga
-  LoadedState({required this.markers, required this.polylines});
-
+  LoadedState({
+    required this.markers,
+    required this.polylines,
+    this.centerPosition,
+  });
 }
-
-
 
 class ErrorState extends MapState {
   final String message;
