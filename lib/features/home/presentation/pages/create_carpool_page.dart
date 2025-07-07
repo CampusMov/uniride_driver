@@ -21,14 +21,14 @@ class CreateCarpoolPage extends StatefulWidget {
     this.isInitiallyStarted = false,
     this.onModeChanged,
     this.onNavigateToDetails,
-    this.onRouteRequest,
+    required this.onRouteRequest,
   });
 
   final ValueChanged<bool> onTap;
   final bool isInitiallyStarted;
   final ValueChanged<bool>? onModeChanged;
   final VoidCallback? onNavigateToDetails;
-  final ValueChanged<RouteRequestModel>? onRouteRequest;
+  final ValueChanged<RouteRequestModel> onRouteRequest;
 
   @override
   State<CreateCarpoolPage> createState() => _CreateCarpoolPageState();
@@ -58,7 +58,6 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
       body: SafeArea(
         child: BlocConsumer<CreateCarpoolBloc, CreateCarpoolState>(
           listener: (context, state) {
-            // Manejar el éxito de la creación del carpool
             if (state.carpoolCreationResult != null) {
               if (state.carpoolCreationResult is Success) {
                 // Carpool creado exitosamente
@@ -75,15 +74,39 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
                 });
 
                 // Notificar al padre que el modo cambió
-                widget.onModeChanged?.call(true); // true = carpool iniciado
-                widget.onRouteRequest?.call(
-                  RouteRequestModel(
-                      startLatitude : state.originLocation?.latitude ?? 0.0,
-                      startLongitude: state.originLocation?.longitude ?? 0.0,
-                      endLatitude: state.classSchedule?.latitude ?? 0.0,
-                      endLongitude: state.classSchedule?.longitude ?? 0.0
-                  ),
-                );
+                widget.onModeChanged?.call(true);
+
+                // ✅ VALIDAR COORDENADAS ANTES DE SOLICITAR RUTA
+                if (state.originLocation != null &&
+                    state.classSchedule != null &&
+                    state.originLocation!.latitude != 0.0 &&
+                    state.originLocation!.longitude != 0.0 &&
+                    state.classSchedule!.latitude != 0.0 &&
+                    state.classSchedule!.longitude != 0.0) {
+
+                  final routeRequest = RouteRequestModel(
+                      startLatitude: state.originLocation!.latitude,
+                      startLongitude: state.originLocation!.longitude,
+                      endLatitude: state.classSchedule!.latitude,
+                      endLongitude: state.classSchedule!.longitude
+                  );
+
+                  print('🚗 Solicitando ruta desde: ${state.originLocation!.latitude}, ${state.originLocation!.longitude}');
+                  print('🎯 Hacia: ${state.classSchedule!.latitude}, ${state.classSchedule!.longitude}');
+
+                  widget.onRouteRequest.call(routeRequest);
+                } else {
+                  print('❌ Error: Coordenadas inválidas para la ruta');
+                  print('Origin: ${state.originLocation?.latitude}, ${state.originLocation?.longitude}');
+                  print('Destination: ${state.classSchedule?.latitude}, ${state.classSchedule?.longitude}');
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: No se pueden mostrar la ruta. Coordenadas inválidas.'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
 
               } else if (state.carpoolCreationResult is Failure) {
                 // Error al crear carpool
