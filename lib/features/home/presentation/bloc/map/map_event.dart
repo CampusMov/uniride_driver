@@ -9,7 +9,7 @@ class InitialMap extends MapEvent{
 
   final LatLng destinationPosition;
   final LatLng initialPosition;
-  
+
   InitialMap({
     required this.destinationPosition,
     required this.initialPosition,
@@ -23,6 +23,10 @@ class InitialMap extends MapEvent{
 class AddMarker extends MapEvent{
   final LatLng position;
   const AddMarker(this.position);
+}
+
+class CenterOnUserLocation extends MapEvent{
+  const CenterOnUserLocation();
 }
 
 class GetRoute extends MapEvent {
