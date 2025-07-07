@@ -17,6 +17,7 @@ import 'package:uniride_driver/features/profile/presentantion/pages/register_pro
 import 'package:uniride_driver/firebase_options.dart';
 
 import 'core/di/injection_container.dart' as di;
+import 'features/home/domain/repositories/route_repository.dart';
 import 'features/profile/presentantion/pages/register_profile_full_name_page.dart';
 import 'features/profile/presentantion/pages/register_profile_list_sections_page.dart';
 import 'features/profile/presentantion/pages/register_profile_vehicle_info_page.dart';
@@ -65,7 +66,9 @@ class MainApp extends StatelessWidget {
       ScreensRoutes.searchCarpool : (context) => BlocProvider(
         create: (context) => SelectLocationBloc(),
         child: BlocProvider(
-          create: (context) => MapBloc(),
+          create: (context) => MapBloc(
+              routeRepository: di.sl<RouteRepository>()
+          ),
           child: BlocProvider(
             create: (context) => FavoritesBloc(),
             child: const HomePage(),
