@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +11,6 @@ import 'package:uniride_driver/features/home/presentation/bloc/map/map_state.dar
 class MapViewWidget extends StatefulWidget {
   const MapViewWidget({super.key, required this.markers, required this.polylines});
 
-  //Variables que necesita el widget
   final Set<Marker> markers;
   final Set<Polyline> polylines;
 
@@ -19,9 +19,7 @@ class MapViewWidget extends StatefulWidget {
 }
 
 class _MapViewWidgetState extends State<MapViewWidget> {
-
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
-
   location_service.LocationData? _currentLocation;
   final location_service.Location location = location_service.Location();
 
@@ -34,20 +32,90 @@ class _MapViewWidgetState extends State<MapViewWidget> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    print('🗺️ MapViewWidget inicializado');
+    print('📍 Markers: ${widget.markers.length}');
+    print('📈 Polylines: ${widget.polylines.length}');
+  }
+
+  @override
+  void didUpdateWidget(MapViewWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // ✅ DETECTAR CAMBIOS EN MARKERS Y POLYLINES
+    if (oldWidget.markers.length != widget.markers.length ||
+        oldWidget.polylines.length != widget.polylines.length) {
+      print('🔄 MapViewWidget actualizado');
+      print('📍 Markers: ${oldWidget.markers.length} -> ${widget.markers.length}');
+      print('📈 Polylines: ${oldWidget.polylines.length} -> ${widget.polylines.length}');
+
+      // Si hay nuevos markers, centrar el mapa en la ruta
+      if (widget.markers.isNotEmpty && widget.polylines.isNotEmpty) {
+        _fitMapToRoute();
+      }
+    }
+  }
+
+  // ✅ NUEVA FUNCIÓN PARA AJUSTAR EL MAPA A LA RUTA
+  Future<void> _fitMapToRoute() async {
+    if (widget.markers.isEmpty) return;
+
+    try {
+      final controller = await _mapController.future;
+
+      // Calcular bounds para incluir todos los markers
+      double minLat = widget.markers.first.position.latitude;
+      double maxLat = widget.markers.first.position.latitude;
+      double minLng = widget.markers.first.position.longitude;
+      double maxLng = widget.markers.first.position.longitude;
+
+      for (final marker in widget.markers) {
+        minLat = math.min(minLat, marker.position.latitude);
+        maxLat = math.max(maxLat, marker.position.latitude);
+        minLng = math.min(minLng, marker.position.longitude);
+        maxLng = math.max(maxLng, marker.position.longitude);
+      }
+
+      final bounds = LatLngBounds(
+        southwest: LatLng(minLat, minLng),
+        northeast: LatLng(maxLat, maxLng),
+      );
+
+      print('🎯 Ajustando mapa a bounds: $bounds');
+
+      await controller.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          bounds,
+          100.0, // padding
+        ),
+      );
+    } catch (e) {
+      print('❌ Error ajustando mapa a ruta: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<MapBloc, MapState>(
       listener: (context, state) {
+        print('🗺️ MapViewWidget - Estado cambiado: ${state.runtimeType}');
+
         // Escuchar cuando necesita centrar el mapa en una posición específica
         if (state is LoadedState && state.centerPosition != null) {
           _centerMapOnPosition(state.centerPosition!);
+        }
+
+        // ✅ NUEVA LÓGICA PARA MANEJAR RUTAS
+        if (state is LoadedState &&
+            state.markers.isNotEmpty &&
+            state.polylines.isNotEmpty) {
+          print('🛣️ Nueva ruta cargada, ajustando vista del mapa');
+          _fitMapToRoute();
         }
       },
       child: GoogleMap(
         myLocationButtonEnabled: false,
         onMapCreated: (GoogleMapController controller) {
+          print('🗺️ Mapa creado exitosamente');
           _mapController.complete(controller);
         },
         initialCameraPosition: _initialCameraPosition,
@@ -59,7 +127,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
         zoomControlsEnabled: true,
         zoomGesturesEnabled: true,
         onTap: (position) {
-          // Puedes agregar lógica aquí si necesitas
+          print('📍 Tap en mapa: $position');
         },
       ),
     );

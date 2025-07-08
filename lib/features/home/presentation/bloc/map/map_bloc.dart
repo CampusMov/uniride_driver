@@ -144,6 +144,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     });
 
     on<GetRoute>((event, emit) async {
+      print('🗺️ MapBloc - Iniciando GetRoute');
+      print('📍 Desde: ${event.routeRequestModel.startLatitude}, ${event.routeRequestModel.startLongitude}');
+      print('📍 Hacia: ${event.routeRequestModel.endLatitude}, ${event.routeRequestModel.endLongitude}');
+
+      // Emitir estado de carga
+      emit(LoadingState());
+
       try {
         final result = await routeRepository.getRoute(
           event.routeRequestModel.startLatitude,
@@ -155,42 +162,72 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         switch (result) {
           case Success<Route>():
             log('TAG: MapBloc - GetRoute - Success: ${result.data}');
+            print('✅ Ruta obtenida exitosamente');
+            print('📊 Intersecciones: ${result.data.intersections.length}');
+            print('📏 Distancia total: ${result.data.totalDistance}');
+            print('⏱️ Duración total: ${result.data.totalDuration}');
+
             if (result.data.intersections.isEmpty) {
               log('TAG: MapBloc - GetRoute - Intersections are empty');
+              print('⚠️ No hay intersecciones en la ruta');
+
+              // ✅ EN LUGAR DE RETURN, EMITIR UN ESTADO DE ERROR
+              emit(ErrorState('No se encontraron intersecciones para la ruta solicitada'));
               return;
             }
+
+            // Crear markers para inicio y fin
             final markers = <Marker>{
               Marker(
                 markerId: const MarkerId('initialPosition'),
-                position: LatLng(result.data.intersections[0].latitude, result.data.intersections[0].longitude),
+                position: LatLng(
+                    result.data.intersections[0].latitude,
+                    result.data.intersections[0].longitude
+                ),
                 infoWindow: const InfoWindow(title: 'Posición inicial'),
+                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
               ),
               Marker(
                 markerId: const MarkerId('destinationPosition'),
-                position: LatLng(result.data.intersections[result.data.intersections.length - 1].latitude, result.data.intersections[result.data.intersections.length - 1].longitude),
+                position: LatLng(
+                    result.data.intersections[result.data.intersections.length - 1].latitude,
+                    result.data.intersections[result.data.intersections.length - 1].longitude
+                ),
                 infoWindow: const InfoWindow(title: 'Posición final'),
+                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
               ),
             };
+
+            // Crear polyline para la ruta
             final polyline = Polyline(
               polylineId: const PolylineId('route'),
               color: ColorPaletter.warning,
               width: 5,
-              points: result.data.intersections.map((e) => LatLng(e.latitude, e.longitude)).toList(),
+              points: result.data.intersections
+                  .map((e) => LatLng(e.latitude, e.longitude))
+                  .toList(),
             );
 
+            print('✅ Emitiendo estado LoadedState con ${markers.length} markers y 1 polyline');
             emit(LoadedState(markers: markers, polylines: {polyline}));
-
             break;
+
           case Failure<Route>():
             log('TAG: MapBloc - GetRoute - Failure: ${result.message}');
-            return;
+            print('❌ Error obteniendo ruta: ${result.message}');
+            emit(ErrorState('Error obteniendo ruta: ${result.message}'));
+            break;
+
           case Loading<Route>():
             log('TAG: MapBloc - GetRoute - Loading');
-            return;
+            print('⏳ Cargando ruta...');
+            // Ya emitimos LoadingState arriba
+            break;
         }
       } catch (e) {
-        emit(ErrorState(e.toString()));
-        log('TAG: MapBloc - GetRoute - Error: $e');
+        log('TAG: MapBloc - GetRoute - Exception: $e');
+        print('💥 Excepción en GetRoute: $e');
+        emit(ErrorState('Error inesperado: ${e.toString()}'));
       }
     });
   }

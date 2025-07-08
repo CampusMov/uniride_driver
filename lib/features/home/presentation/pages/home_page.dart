@@ -14,6 +14,7 @@ import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/core/di/injection_container.dart' as di;
 
+import '../../data/model/route_request_model.dart';
 import '../bloc/map/map_event.dart';
 
 class HomePage extends StatefulWidget {
@@ -37,6 +38,22 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+  }
+
+  void _handleRouteRequest(RouteRequestModel routeRequest) {
+    print('🏠 HomePage._handleRouteRequest llamado');
+    print('📍 Desde: ${routeRequest.startLatitude}, ${routeRequest.startLongitude}');
+    print('📍 Hacia: ${routeRequest.endLatitude}, ${routeRequest.endLongitude}');
+
+    try {
+      // Usar el context principal de HomePage, no del Navigator anidado
+      final mapBloc = context.read<MapBloc>();
+      print('✅ MapBloc encontrado en context principal');
+      mapBloc.add(GetRoute(routeRequestModel: routeRequest));
+      print('✅ Evento GetRoute enviado al MapBloc');
+    } catch (e) {
+      print('❌ Error enviando evento al MapBloc: $e');
+    }
   }
 
   // Método para navegar con carga
@@ -177,10 +194,7 @@ class _HomePageState extends State<HomePage> {
                                 _navigateWithLoading('/position_selection_destination');
 
                               },
-                              onRouteRequest: (routeRequest) {
-                                context.read<MapBloc>()
-                                    .add(GetRoute(routeRequestModel: routeRequest));
-                              },
+                              onRouteRequest: _handleRouteRequest,
                             ),
                           );
                           break;
@@ -228,6 +242,8 @@ class _HomePageState extends State<HomePage> {
                                   // Usar navegación con carga
                                   value ? _navigateWithLoading('/position_selection_origin') :
                                   _navigateWithLoading('/position_selection_destination');
+                                }, onRouteRequest: (RouteRequestModel value) {
+                                  _handleRouteRequest(value);
                                 }
                             ),
                           );
