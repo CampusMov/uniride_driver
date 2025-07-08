@@ -18,7 +18,7 @@ class PassengerRequestServiceImpl implements PassengerRequestService {
   @override
   Future<List<PassengerRequestResponseModel>> getPassengerRequestsByCarpoolId(String carpoolId) async {
     try {
-      final uri = Uri.parse('$baseUrl/carpools/$carpoolId/passenger-requests');
+      final uri = Uri.parse('$baseUrl/passenger-requests?carpoolId=$carpoolId');
 
       log('TAG: PassengerRequestService - GET passenger requests by carpool');
       log('TAG: PassengerRequestService - URL: $uri');
