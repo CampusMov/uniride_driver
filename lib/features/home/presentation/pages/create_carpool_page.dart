@@ -51,6 +51,20 @@ class _CreateCarpoolPageState extends State<CreateCarpoolPage> {
     _isCreateMode = !widget.isInitiallyStarted;
   }
 
+  void _safeAddEvent(BuildContext context, dynamic event) {
+    try {
+      if (mounted && context.mounted) {
+        final bloc = context.read<CreateCarpoolBloc>();
+        if (!bloc.isClosed) {
+          bloc.add(event);
+        }
+      }
+    } catch (e) {
+      // Ignore if BLoC is closed
+      debugPrint('BLoC is closed, ignoring event: $event');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
