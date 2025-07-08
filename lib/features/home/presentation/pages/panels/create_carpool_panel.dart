@@ -69,7 +69,7 @@ class CreateCarpoolPanel extends StatelessWidget {
           context.read<CreateCarpoolBloc>().add(const OpenDialogToSelectOriginLocation());
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(0, 8, 16, 8),
           child: Row(
             children: [
               Container(
@@ -144,7 +144,7 @@ class CreateCarpoolPanel extends StatelessWidget {
           context.read<CreateCarpoolBloc>().add(const OpenDialogToSelectClassSchedule());
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(0, 8, 16, 8),
           child: Row(
             children: [
               Container(
@@ -242,10 +242,6 @@ class CreateCarpoolPanel extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
               child: Center(
                 child: Text(
                   state.maxPassengers.toString(),
@@ -303,10 +299,6 @@ class CreateCarpoolPanel extends StatelessWidget {
             Container(
               width: 60,
               height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
               child: Center(
                 child: Text(
                   '${state.radius}m',
@@ -320,12 +312,12 @@ class CreateCarpoolPanel extends StatelessWidget {
             ),
 
             IconButton(
-              onPressed: state.radius < 500
+              onPressed: state.radius < 100
                   ? () => context.read<CreateCarpoolBloc>().add(const IncreaseRadius())
                   : null,
               icon: Icon(
                 Icons.add_circle_outline,
-                color: state.radius < 500 ? Colors.white : Colors.grey,
+                color: state.radius < 100 ? Colors.white : Colors.grey,
                 size: 30,
               ),
             ),
