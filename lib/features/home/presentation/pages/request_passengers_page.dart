@@ -1,7 +1,77 @@
 import 'package:flutter/material.dart';
 
-class RequestPassengersPage extends StatelessWidget {
+// Clase simple para representar un pasajero/solicitud
+class PassengerRequest {
+  final String id;
+  final String name;
+  final String rating;
+  final String location;
+  final String price;
+
+  PassengerRequest({
+    required this.id,
+    required this.name,
+    required this.rating,
+    required this.location,
+    required this.price,
+  });
+}
+
+class RequestPassengersPage extends StatefulWidget {
   const RequestPassengersPage({super.key});
+
+  @override
+  State<RequestPassengersPage> createState() => _RequestPassengersPageState();
+}
+
+class _RequestPassengersPageState extends State<RequestPassengersPage> {
+  // Lista de pasajeros ya aceptados
+  List<PassengerRequest> acceptedPassengers = [
+  ];
+
+  // Lista de solicitudes pendientes
+  List<PassengerRequest> pendingRequests = [
+    PassengerRequest(
+      id: '3',
+      name: 'Gustavo Antonio Perez Rojas',
+      rating: '0',
+      location: 'Universidad de Lima',
+      price: 'S/5.10',
+    ),
+  ];
+
+  // Función para aceptar una solicitud
+  void _acceptRequest(PassengerRequest request) {
+    setState(() {
+      pendingRequests.removeWhere((p) => p.id == request.id);
+      acceptedPassengers.add(request);
+    });
+
+    // Mostrar mensaje de confirmación
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Solicitud de ${request.name} aceptada'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Función para rechazar una solicitud
+  void _rejectRequest(PassengerRequest request) {
+    setState(() {
+      pendingRequests.removeWhere((p) => p.id == request.id);
+    });
+
+    // Mostrar mensaje de confirmación
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Solicitud de ${request.name} rechazada'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,13 +100,26 @@ class RequestPassengersPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            
-            // Pasajeros
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', true),
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', true),
-            
+
+            // Lista de pasajeros aceptados
+            if (acceptedPassengers.isEmpty)
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'No hay pasajeros aceptados aún',
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 16,
+                  ),
+                ),
+              )
+            else
+              ...acceptedPassengers.map((passenger) =>
+                  _buildPassengerCard(passenger, true)
+              ).toList(),
+
             SizedBox(height: 40),
-            
+
             // Título Lista de solicitudes
             Text(
               'Lista de solicitudes',
@@ -47,20 +130,30 @@ class RequestPassengersPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            
-            // Solicitudes
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', false),
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', false),
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', false),
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', false),
-            _buildSimpleCard('Pedro Ruiz Gallo', '3.6', 'Lince', 'S/5.10', false),
+
+            // Lista de solicitudes pendientes
+            if (pendingRequests.isEmpty)
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'No hay solicitudes pendientes',
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 16,
+                  ),
+                ),
+              )
+            else
+              ...pendingRequests.map((request) =>
+                  _buildPassengerCard(request, false)
+              ).toList(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSimpleCard(String name, String rating, String location, String price, bool hasChat) {
+  Widget _buildPassengerCard(PassengerRequest passenger, bool isAccepted) {
     return Container(
       margin: EdgeInsets.only(bottom: 10),
       padding: EdgeInsets.all(15),
@@ -77,7 +170,7 @@ class RequestPassengersPage extends StatelessWidget {
             child: Icon(Icons.person, color: Colors.white),
           ),
           SizedBox(width: 12),
-          
+
           // Info
           Expanded(
             child: Column(
@@ -87,11 +180,11 @@ class RequestPassengersPage extends StatelessWidget {
                   children: [
                     Icon(Icons.star, color: Colors.orange, size: 16),
                     SizedBox(width: 4),
-                    Text(rating, style: TextStyle(color: Colors.white)),
+                    Text(passenger.rating, style: TextStyle(color: Colors.white)),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        name, 
+                        passenger.name,
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -103,17 +196,17 @@ class RequestPassengersPage extends StatelessWidget {
                   children: [
                     Icon(Icons.person_outline, color: Colors.grey[400], size: 16),
                     SizedBox(width: 4),
-                    Text(location, style: TextStyle(color: Colors.grey[400])),
+                    Text(passenger.location, style: TextStyle(color: Colors.grey[400])),
                   ],
                 ),
                 SizedBox(height: 4),
-                Text(price, style: TextStyle(color: Colors.grey[400])),
+                Text(passenger.price, style: TextStyle(color: Colors.grey[400])),
               ],
             ),
           ),
-          
+
           // Botón derecho
-          if (hasChat)
+          if (isAccepted)
             Container(
               decoration: BoxDecoration(
                 color: Colors.grey[700],
@@ -123,7 +216,12 @@ class RequestPassengersPage extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: Icon(Icons.chat_outlined, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: () {
+                      // Aquí podrías abrir el chat
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Abrir chat con ${passenger.name}')),
+                      );
+                    },
                   ),
                   Positioned(
                     right: 8,
@@ -159,7 +257,7 @@ class RequestPassengersPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () {},
+                      onPressed: () => _acceptRequest(passenger),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -170,7 +268,7 @@ class RequestPassengersPage extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () => _rejectRequest(passenger),
                       child: Text('Rechazar', style: TextStyle(color: Colors.grey[400])),
                     ),
                   ],
