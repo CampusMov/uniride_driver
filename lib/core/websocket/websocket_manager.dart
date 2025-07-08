@@ -5,7 +5,6 @@ import 'dart:developer';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:uniride_driver/core/constants/api_constants.dart';
 
-import '../../features/home/domain/entities/enum_passenger_request_status.dart';
 import '../events/app_event_bus.dart';
 import '../../features/home/data/model/passenger_request_response_model.dart';
 import '../events/app_events.dart';
@@ -29,8 +28,6 @@ class WebSocketManager {
   final Map<String, Map<String, StompUnsubscribe>> _subscriptionsByService = {};
   final Map<String, Timer> _reconnectTimers = {};
   final Map<String, String> _serviceUrls = {};
-
-  String? _currentUserId;
 
   // Stream controllers for connection status
   final Map<String, StreamController<WebSocketConnectionStatus>> _statusControllers = {};
@@ -122,6 +119,8 @@ class WebSocketManager {
     required Function(Map<String, dynamic>) onMessage,
   })
   {
+    log('TAG: WebSocketManager - [$serviceName] Attempting to subscribe to $topic with key $subscriptionKey');
+
     if (_connectionStatuses[serviceName] != WebSocketConnectionStatus.connected) {
       log('TAG: WebSocketManager - [$serviceName] Cannot subscribe, not connected');
       return;
@@ -130,6 +129,8 @@ class WebSocketManager {
     final client = _connections[serviceName]!;
     final serviceSubscriptions = _subscriptionsByService[serviceName]!;
 
+    log('TAG: WebSocketManager - [$serviceName] Current subscriptions: ${serviceSubscriptions.keys}');
+
     // If already subscribed, skip subscription
     if (serviceSubscriptions.containsKey(subscriptionKey)) {
       log('TAG: WebSocketManager - [$serviceName] Already subscribed to $subscriptionKey');
@@ -137,15 +138,18 @@ class WebSocketManager {
     }
 
     try {
+      log('TAG: WebSocketManager - [$serviceName] Creating subscription for $topic');
       final unsubscribe = client.subscribe(
         destination: topic,
         callback: (StompFrame frame) {
+          log('TAG: WebSocketManager - [$serviceName] Callback triggered for $topic');
           _handleMessage(serviceName, topic, frame, onMessage);
         },
       );
 
       serviceSubscriptions[subscriptionKey] = unsubscribe;
       log('TAG: WebSocketManager - [$serviceName] Subscribed to $topic');
+      log('TAG: WebSocketManager - [$serviceName] Total subscriptions now: ${serviceSubscriptions.length}');
     } catch (e) {
       log('TAG: WebSocketManager - [$serviceName] Error subscribing to $topic: $e');
     }
@@ -160,12 +164,21 @@ class WebSocketManager {
       )
   {
     try {
-      if (frame.body == null) return;
+      log('TAG: WebSocketManager - [$serviceName] RAW MESSAGE RECEIVED on $topic');
+      log('TAG: WebSocketManager - [$serviceName] Frame headers: ${frame.headers}');
+      log('TAG: WebSocketManager - [$serviceName] Frame body: ${frame.body}');
+
+      if (frame.body == null) {
+        log('TAG: WebSocketManager - [$serviceName] Frame body is null, skipping');
+        return;
+      }
 
       final jsonData = json.decode(frame.body!);
-      log('TAG: WebSocketManager - [$serviceName] Received message on $topic: $jsonData');
+      log('TAG: WebSocketManager - [$serviceName] Parsed JSON: $jsonData');
 
       onMessage(jsonData);
+
+      log('TAG: WebSocketManager - [$serviceName] Message handled successfully');
     } catch (e) {
       log('TAG: WebSocketManager - [$serviceName] Error handling message: $e');
     }
@@ -213,7 +226,7 @@ class WebSocketManager {
   /// MATCHING-ROUTING SERVICE - Subscribe to passenger request created
   void subscribeToPassengerRequestInCarpool(String carpoolId) {
     subscribeToTopic(
-      serviceName: '${ApiConstants.webSocketUrl}${ApiConstants.routingMatchingServiceName}',
+      serviceName: ApiConstants.routingMatchingServiceName,
       topic: '/topic/carpools/$carpoolId/passenger-requests/status',
       subscriptionKey: 'carpool_${carpoolId}_passenger_requests',
       onMessage: (data) => _handlePassengerRequestUpdate(data, carpoolId),
@@ -222,27 +235,17 @@ class WebSocketManager {
 
   void _handlePassengerRequestUpdate(Map<String, dynamic> data, String carpoolId) {
     try {
+      log('TAG: WebSocketManager - Processing passenger request update for carpool $carpoolId');
       final passengerRequest = PassengerRequestResponseModel.fromJson(data).toDomain();
 
+      final serviceName = ApiConstants.routingMatchingServiceName;
+      final currentStatus = _connectionStatuses[serviceName];
+      log('TAG: WebSocketManager - Connection status after processing: $currentStatus');
+
       // Emit events based on the passenger request status
-      switch (passengerRequest.status) {
-        case PassengerRequestStatus.pending:
-          log('TAG: WebSocketManager - Passenger request received for carpool $carpoolId: ${passengerRequest.toString()}');
-          AppEventBus().emit(PassengerRequestReceived(passengerRequest));
-          break;
-        case PassengerRequestStatus.accepted:
-          log('TAG: WebSocketManager - Passenger request accepted for carpool $carpoolId: ${passengerRequest.toString()}');
-          AppEventBus().emit(PassengerRequestAccepted(passengerRequest));
-          break;
-        case PassengerRequestStatus.rejected:
-          log('TAG: WebSocketManager - Passenger request rejected for carpool $carpoolId: ${passengerRequest.toString()}');
-          AppEventBus().emit(PassengerRequestRejected(passengerRequest));
-          break;
-        case PassengerRequestStatus.cancelled:
-          log('TAG: WebSocketManager - Passenger request cancelled for carpool $carpoolId: ${passengerRequest.toString()}');
-          AppEventBus().emit(PassengerRequestCancelled(passengerRequest));
-          break;
-      }
+      log('TAG: WebSocketManager - Emitting PassengerRequestReceived event');
+      AppEventBus().emit(PassengerRequestReceived(passengerRequest));
+      log('TAG: WebSocketManager - Event emitted successfully');
     } catch (e) {
       log('TAG: WebSocketManager - Error handling passenger request update: $e');
     }
@@ -296,7 +299,7 @@ class WebSocketManager {
     _reconnectTimers[serviceName] = Timer(const Duration(seconds: 5), () {
       log('TAG: WebSocketManager - [$serviceName] Attempting to reconnect...');
       final url = _serviceUrls[serviceName];
-      if (url != null && _currentUserId != null) {
+      if (url != null) {
         connectToService(
           serviceName: serviceName,
           wsUrl: url,

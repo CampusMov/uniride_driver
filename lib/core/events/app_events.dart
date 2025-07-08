@@ -121,30 +121,3 @@ class PassengerRequestReceived extends AppEvent {
   @override
   List<Object?> get props => [passengerRequest];
 }
-
-class PassengerRequestAccepted extends AppEvent {
-  final PassengerRequest passengerRequest;
-
-  const PassengerRequestAccepted(this.passengerRequest);
-
-  @override
-  List<Object?> get props => [passengerRequest];
-}
-
-class PassengerRequestRejected extends AppEvent {
-  final PassengerRequest passengerRequest;
-
-  const PassengerRequestRejected(this.passengerRequest);
-
-  @override
-  List<Object?> get props => [passengerRequest];
-}
-
-class PassengerRequestCancelled extends AppEvent {
-  final PassengerRequest passengerRequest;
-
-  const PassengerRequestCancelled(this.passengerRequest);
-
-  @override
-  List<Object?> get props => [passengerRequest];
-}

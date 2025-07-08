@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/core/constants/api_constants.dart';
 
 import '../../../../../core/events/app_event_bus.dart';
 import '../../../../../core/events/app_events.dart';
@@ -54,30 +55,15 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
     // Utility events
     on<ClearMessages>(_onClearMessages);
     on<MarkRequestAsViewed>(_onMarkAsViewed);
+
+    _eventBusSubscription = AppEventBus().on<CarpoolCreatedSuccessfully>().listen((event) {
+      add(LoadPassengerRequests(event.carpoolId));
+    });
   }
 
   void _initializeEventBusListener() {
-    _eventBusSubscription = AppEventBus().events.listen((event) {
-      if (event is PassengerRequestReceived) {
-        // Add to list automatically
-        add(AddPassengerRequest(event.passengerRequest));
-
-        // Auto-open dialog if not already open and has pending requests
-        if (!state.isDialogOpen && state.pendingRequestsCount == 0) {
-          add(const OpenRequestsManagementDialog());
-        }
-      }
-      if (event is PassengerRequestAccepted) {
-        add(UpdatePassengerRequest(event.passengerRequest));
-      }
-
-      if (event is PassengerRequestRejected) {
-        add(UpdatePassengerRequest(event.passengerRequest));
-      }
-
-      if (event is PassengerRequestCancelled) {
-        add(RemovePassengerRequest(event.passengerRequest.id));
-      }
+    _eventBusSubscription = AppEventBus().on<PassengerRequestReceived>().listen((event) {
+      add(AddPassengerRequest(event.passengerRequest));
     });
   }
 
@@ -105,6 +91,8 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
             isLoadingRequests: false,
             successMessage: 'Solicitudes cargadas exitosamente',
           ));
+
+          await _initializeWebSocketForCarpool(event.carpoolId);
           break;
 
         case Failure<List<PassengerRequest>>():
@@ -125,6 +113,40 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
         isLoadingRequests: false,
         errorMessage: 'Error inesperado al cargar solicitudes: ${e.toString()}',
       ));
+    }
+  }
+
+  Future<void> _initializeWebSocketForCarpool(String carpoolId) async {
+    try {
+      final webSocketManager = WebSocketManager();
+      final wsUrl = '${ApiConstants.webSocketUrl}${ApiConstants.routingMatchingServiceName}/ws';
+
+      log('TAG: PassengerRequestBloc - Initializing WebSocket for carpool: $carpoolId');
+
+      // Connect to matching-routing service if not already connected
+      final connectionStatus = webSocketManager.getConnectionStatus(ApiConstants.routingMatchingServiceName);
+
+      if (connectionStatus != WebSocketConnectionStatus.connected) {
+        log('TAG: PassengerRequestBloc - Connecting to WebSocket: $wsUrl');
+
+        await webSocketManager.connectToService(
+          serviceName: ApiConstants.routingMatchingServiceName,
+          wsUrl: wsUrl,
+        );
+
+        // Wait a bit for connection to establish
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      // Subscribe to passenger requests for this carpool
+      log('TAG: PassengerRequestBloc - Subscribing to passenger requests for carpool: $carpoolId');
+      webSocketManager.subscribeToPassengerRequestInCarpool(carpoolId);
+
+      log('TAG: PassengerRequestBloc - WebSocket initialized successfully for carpool: $carpoolId');
+
+    } catch (e) {
+      log('TAG: PassengerRequestBloc - Error initializing WebSocket: $e');
+      // Don't emit error state, WebSocket is optional
     }
   }
 
