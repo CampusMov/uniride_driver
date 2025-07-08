@@ -97,10 +97,6 @@ class _PassengerRequestDialogState extends State<PassengerRequestDialog> {
                   Expanded(
                     child: _buildRequestsList(context, state),
                   ),
-
-                  // Batch action buttons (if selections exist)
-                  if (state.hasSelectedRequests)
-                    _buildBatchActionButtons(context, state),
                 ],
               ),
             ),
@@ -327,16 +323,6 @@ class _PassengerRequestDialogState extends State<PassengerRequestDialog> {
           _buildStatItem('Pendientes', state.pendingRequestsCount, Colors.orange),
           const SizedBox(width: 20),
           _buildStatItem('Aceptadas', state.acceptedRequestsCount, Colors.green),
-          const Spacer(),
-          if (state.hasSelectedRequests)
-            Text(
-              '${state.selectedRequestIds.length} seleccionadas',
-              style: const TextStyle(
-                color: Colors.orange,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
         ],
       ),
     );
@@ -524,35 +510,6 @@ class _PassengerRequestDialogState extends State<PassengerRequestDialog> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      // Checkbox para selección
-                      GestureDetector(
-                        onTap: () {
-                          context.read<PassengerRequestBloc>().add(
-                            ToggleRequestSelection(request.id),
-                          );
-                        },
-                        child: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.orange : Colors.transparent,
-                            border: Border.all(
-                              color: isSelected ? Colors.orange : Colors.white.withOpacity(0.3),
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 16,
-                          )
-                              : null,
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
                       // Avatar del pasajero
                       Container(
                         width: 50,
@@ -787,77 +744,6 @@ class _PassengerRequestDialogState extends State<PassengerRequestDialog> {
               color: color,
               fontSize: 12,
               fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBatchActionButtons(BuildContext context, PassengerRequestState state) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        border: Border(
-          top: BorderSide(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            '${state.selectedRequestIds.length} seleccionadas',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: state.isBatchProcessing
-                ? null
-                : () {
-              context.read<PassengerRequestBloc>().add(
-                BatchAcceptRequests(
-                  requestIds: state.selectedRequestIds.toList(),
-                  message: "¡Bienvenidos al carpool!",
-                ),
-              );
-            },
-            icon: const Icon(Icons.check, size: 18),
-            label: const Text('Aceptar todas'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: state.isBatchProcessing
-                ? null
-                : () {
-              context.read<PassengerRequestBloc>().add(
-                BatchRejectRequests(
-                  requestIds: state.selectedRequestIds.toList(),
-                  reason: "No hay asientos disponibles.",
-                ),
-              );
-            },
-            icon: const Icon(Icons.close, size: 18),
-            label: const Text('Rechazar todas'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
           ),
         ],
