@@ -14,6 +14,9 @@ import '../../bloc/home/home_state.dart';
 import '../../bloc/map/map_bloc.dart';
 import '../../bloc/map/map_event.dart';
 import '../../bloc/map/map_state.dart';
+import '../../bloc/passenger-request/passenger_request_bloc.dart';
+import '../../bloc/passenger-request/passenger_request_event.dart';
+import '../../bloc/passenger-request/passenger_request_state.dart';
 import '../dialogs/class_schedule_dialog.dart';
 import '../dialogs/origin_location_dialog.dart';
 
@@ -30,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   late HomePageBloc _homePageBloc;
   late MapBloc _mapBloc;
   late WaitingCarpoolBloc _waitingCarpoolBloc;
+  late PassengerRequestBloc _passengerRequestBloc;
 
   @override
   void initState() {
@@ -38,6 +42,7 @@ class _HomePageState extends State<HomePage> {
     _homePageBloc = di.sl<HomePageBloc>();
     _mapBloc = di.sl<MapBloc>();
     _waitingCarpoolBloc = di.sl<WaitingCarpoolBloc>();
+    _passengerRequestBloc = di.sl<PassengerRequestBloc>();
   }
 
   @override
@@ -46,6 +51,7 @@ class _HomePageState extends State<HomePage> {
     _mapBloc.close();
     _waitingCarpoolBloc.close();
     _createCarpoolBloc.close();
+    _passengerRequestBloc.close();
     super.dispose();
   }
 
@@ -58,6 +64,7 @@ class _HomePageState extends State<HomePage> {
             BlocProvider.value(value: _createCarpoolBloc),
             BlocProvider.value(value: _homePageBloc),
             BlocProvider.value(value: _waitingCarpoolBloc),
+            BlocProvider.value(value: _passengerRequestBloc),
           ],
         child: BlocBuilder<HomePageBloc, HomePageState>(
           builder: (context, homeState) {
@@ -65,8 +72,7 @@ class _HomePageState extends State<HomePage> {
               body: Stack(
                 children: [
                   _buildSlidingPanel(homeState.currentTripState),
-                  _buildLocationButton(homeState.currentTripState),
-                  // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
+                  _buildActionButtons(homeState.currentTripState),
                   _buildOriginLocationDialog(homeState.currentTripState),
                   _buildClassScheduleDialog(homeState.currentTripState),
                 ],
@@ -175,37 +181,114 @@ class _HomePageState extends State<HomePage> {
   }
 
   /*
-  * Builds the floating action button that centers the map on the user's location.
+  * Builds the floating action buttons (location and passenger requests).
    */
-  Widget _buildLocationButton(TripState currentTripState) {
+  Widget _buildActionButtons(TripState currentTripState) {
     return Positioned(
       bottom: _getMinHeight(currentTripState) + 20,
       right: 16,
-      child: BlocBuilder<MapBloc, MapState>(
-        builder: (context, state) {
-          return FloatingActionButton(
-            onPressed: () {
-              if (state.userLocation != null) {
-                context.read<MapBloc>().add(CenterMap(state.userLocation!));
-              } else {
-                context.read<MapBloc>().add(GetUserLocation());
-              }
-            },
-            backgroundColor: Colors.white,
-            foregroundColor: state.userLocation != null ? Colors.blue : Colors.grey,
-            heroTag: "user_location",
-            child: state.isLoading
-                ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-                : Icon(state.userLocation != null
-                ? Icons.my_location
-                : Icons.location_searching),
-          );
-        },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Passenger Request Button (only visible in certain states)
+          if (_shouldShowPassengerRequestButton(currentTripState))
+            _buildPassengerRequestButton(),
+
+          if (_shouldShowPassengerRequestButton(currentTripState))
+            const SizedBox(width: 12), // Spacing between buttons
+
+          // Location Button (always visible)
+          _buildLocationButton(),
+        ],
       ),
+    );
+  }
+
+  /*
+  * Builds the passenger request floating action button.
+   */
+  Widget _buildPassengerRequestButton() {
+    return BlocBuilder<PassengerRequestBloc, PassengerRequestState>(
+      builder: (context, state) {
+        return FloatingActionButton(
+          onPressed: () {
+            context.read<PassengerRequestBloc>().add(const OpenRequestsManagementDialog());
+          },
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+          heroTag: "passenger_requests",
+          child: Stack(
+            children: [
+              const Icon(Icons.people),
+              // Badge for pending requests count
+              if (state.pendingRequestsCount > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '${state.pendingRequestsCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /*
+  * Determines if the passenger request button should be visible based on trip state.
+   */
+  bool _shouldShowPassengerRequestButton(TripState currentTripState) {
+    return currentTripState == TripState.waitingToStartCarpool ||
+        currentTripState == TripState.ongoingCarpool;
+  }
+
+  /*
+  * Builds the floating action button that centers the map on the user's location.
+   */
+  Widget _buildLocationButton() {
+    return BlocBuilder<MapBloc, MapState>(
+      builder: (context, state) {
+        return FloatingActionButton(
+          onPressed: () {
+            if (state.userLocation != null) {
+              context.read<MapBloc>().add(CenterMap(state.userLocation!));
+            } else {
+              context.read<MapBloc>().add(GetUserLocation());
+            }
+          },
+          backgroundColor: Colors.white,
+          foregroundColor: state.userLocation != null ? Colors.blue : Colors.grey,
+          heroTag: "user_location",
+          child: state.isLoading
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+              : Icon(state.userLocation != null
+              ? Icons.my_location
+              : Icons.location_searching),
+        );
+      },
     );
   }
 
