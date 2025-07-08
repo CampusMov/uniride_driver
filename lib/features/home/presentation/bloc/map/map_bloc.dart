@@ -1,203 +1,331 @@
-import 'dart:developer';
-
+import 'dart:async';
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart' as location_service;
-import 'package:uniride_driver/core/constants/api_constants.dart';
-import 'package:uniride_driver/core/theme/color_paletter.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_event.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_state.dart';
-
-import '../../../../../core/utils/resource.dart';
-import '../../../domain/entities/route.dart';
-import '../../../domain/repositories/route_repository.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'map_event.dart';
+import 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
-  final RouteRepository routeRepository;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  Timer? _locationUpdateTimer;
 
-  MapBloc({
-    required this.routeRepository,
-}) : super(InitialState()) {
-    
-    Set<Marker> _markers = {};
+  MapBloc() : super(MapState.initial) {
+    on<MapInitialized>(_onMapInitialized);
+    on<GetUserLocation>(_onGetUserLocation);
+    on<CenterMap>(_onCenterMap);
+    on<AddMarker>(_onAddMarker);
+    on<AddMarkers>(_onAddMarkers);
+    on<RemoveMarker>(_onRemoveMarker);
+    on<ClearMarkers>(_onClearMarkers);
+    on<CreatePolyline>(_onCreatePolyline);
+    on<RemovePolyline>(_onRemovePolyline);
+    on<ClearPolylines>(_onClearPolylines);
+    on<FitMarkersToMap>(_onFitMarkersToMap);
+    on<StartNavigation>(_onStartNavigation);
+    on<StopNavigation>(_onStopNavigation);
+    on<UpdateUserLocation>(_onUpdateUserLocation);
+    on<ChangeMapType>(_onChangeMapType);
+  }
 
-    on<InitialMap>((event, emit) async {
-      emit(LoadingState());
+  @override
+  Future<void> close() {
+    _positionStreamSubscription?.cancel();
+    _locationUpdateTimer?.cancel();
+    return super.close();
+  }
 
-      final markers = <Marker>{
-        Marker(
-          markerId: const MarkerId('initialPosition'),
-          position: event.initialPosition,
-          infoWindow: const InfoWindow(title: 'Posición inicial'),
-        ),
-        Marker(
-          markerId: const MarkerId('destinationPosition'),
-          position: event.destinationPosition,
-          infoWindow: const InfoWindow(title: 'Posición final'),
-        ),
-      };
+  Future<void> _onMapInitialized(MapInitialized event, Emitter<MapState> emit) async {
+    emit(state.copyWith(
+      controller: event.controller,
+      isLoading: false,
+    ));
 
-      PolylinePoints polylinePoints = PolylinePoints();
-      final result = await polylinePoints.getRouteBetweenCoordinates(
-          request: PolylineRequest(
-            origin: PointLatLng(event.initialPosition.latitude, event.initialPosition.longitude),
-            destination: PointLatLng(event.destinationPosition.latitude, event.destinationPosition.longitude),
-            mode: TravelMode.driving,
+    add(GetUserLocation());
+  }
+
+  Future<void> _onGetUserLocation(GetUserLocation event, Emitter<MapState> emit) async {
+    try {
+      emit(state.copyWith(isLoading: true));
+
+      final permission = await _checkLocationPermission();
+      if (!permission) {
+        emit(state.copyWith(
+          isLoading: false,
+          error: 'Permisos de ubicación denegados',
+        ));
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+
+      final userLocation = LatLng(position.latitude, position.longitude);
+
+      emit(state.copyWith(
+        isLoading: false,
+        userLocation: userLocation,
+        currentCenter: userLocation,
+        locationPermissionGranted: true,
+        error: null,
+      ));
+
+      add(CenterMap(userLocation));
+
+      _startLocationTracking();
+
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        error: 'Error al obtener ubicación: ${e.toString()}',
+      ));
+    }
+  }
+
+  Future<void> _onCenterMap(CenterMap event, Emitter<MapState> emit) async {
+    if (state.controller == null) return;
+
+    try {
+      await state.controller!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: event.location,
+            zoom: event.zoom,
           ),
-          googleApiKey: ApiConstants.googleMapApiKey
+        ),
       );
 
-      final points = result.points.map((e) => LatLng(e.latitude, e.longitude)).toList();
+      emit(state.copyWith(
+        currentCenter: event.location,
+        currentZoom: event.zoom,
+      ));
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al centrar mapa: ${e.toString()}'));
+    }
+  }
 
-      final polyline = Polyline(
-          polylineId: const PolylineId('route'),
-          color: ColorPaletter.warning,
-          width: 5,
-          points: points
-      );
+  Future<void> _onAddMarker(AddMarker event, Emitter<MapState> emit) async {
+    final newMarker = Marker(
+      markerId: MarkerId(event.markerId),
+      position: event.position,
+      infoWindow: InfoWindow(
+        title: event.title,
+        snippet: event.snippet,
+      ),
+      icon: event.icon ?? BitmapDescriptor.defaultMarker,
+      onTap: event.onTap,
+    );
 
-      emit(LoadedState(markers: markers, polylines: {polyline}));
-    });
+    final updatedMarkers = Set<Marker>.from(state.markers);
+    updatedMarkers.add(newMarker);
 
-    on<AddMarker>((event, emit) {
-      final markerId = MarkerId(event.position.toString());
+    emit(state.copyWith(markers: updatedMarkers));
+  }
+
+  Future<void> _onAddMarkers(AddMarkers event, Emitter<MapState> emit) async {
+    final updatedMarkers = Set<Marker>.from(state.markers);
+
+    for (final markerData in event.markers) {
       final marker = Marker(
-        markerId: markerId,
-        position: event.position,
-        infoWindow: InfoWindow(title: 'Marker at ${event.position.latitude}, ${event.position.longitude}'),
+        markerId: MarkerId(markerData.id),
+        position: markerData.position,
+        infoWindow: InfoWindow(
+          title: markerData.title,
+          snippet: markerData.snippet,
+        ),
+        icon: markerData.icon ?? BitmapDescriptor.defaultMarker,
+        onTap: markerData.onTap,
       );
+      updatedMarkers.add(marker);
+    }
 
-      _markers.add(marker);
+    emit(state.copyWith(markers: updatedMarkers));
+  }
 
-      Set<Polyline> polylines = {};
-      if (state is LoadedState) {
-        polylines = (state as LoadedState).polylines;
+  void _onRemoveMarker(RemoveMarker event, Emitter<MapState> emit) {
+    final updatedMarkers = Set<Marker>.from(state.markers);
+    updatedMarkers.removeWhere((marker) => marker.markerId.value == event.markerId);
+
+    emit(state.copyWith(markers: updatedMarkers));
+  }
+
+  void _onClearMarkers(ClearMarkers event, Emitter<MapState> emit) {
+    emit(state.copyWith(markers: const {}));
+  }
+
+  Future<void> _onCreatePolyline(CreatePolyline event, Emitter<MapState> emit) async {
+    final polyline = Polyline(
+      polylineId: PolylineId(event.polylineId),
+      points: event.points,
+      color: event.color,
+      width: event.width.toInt(),
+      patterns: event.patterns ?? [],
+    );
+
+    final updatedPolylines = Set<Polyline>.from(state.polylines);
+    updatedPolylines.add(polyline);
+
+    emit(state.copyWith(polylines: updatedPolylines));
+
+    // Ajustar el mapa para mostrar toda la polyline
+    if (event.points.isNotEmpty) {
+      _fitPointsToMap(event.points, emit);
+    }
+  }
+
+  void _onRemovePolyline(RemovePolyline event, Emitter<MapState> emit) {
+    final updatedPolylines = Set<Polyline>.from(state.polylines);
+    updatedPolylines.removeWhere((polyline) => polyline.polylineId.value == event.polylineId);
+
+    emit(state.copyWith(polylines: updatedPolylines));
+  }
+
+  void _onClearPolylines(ClearPolylines event, Emitter<MapState> emit) {
+    emit(state.copyWith(polylines: const {}));
+  }
+
+  Future<void> _onFitMarkersToMap(FitMarkersToMap event, Emitter<MapState> emit) async {
+    if (state.controller == null || state.markers.isEmpty) return;
+
+    final bounds = state.markersBounds;
+    if (bounds == null) return;
+
+    try {
+      await state.controller!.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, event.padding.left),
+      );
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al ajustar mapa: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onStartNavigation(StartNavigation event, Emitter<MapState> emit) async {
+    try {
+      final route = [event.origin];
+      if (event.waypoints != null) {
+        route.addAll(event.waypoints!);
       }
+      route.add(event.destination);
 
-      emit(LoadedState(markers: _markers, polylines: polylines));
-    });
+      add(CreatePolyline(
+        polylineId: 'navigation_route',
+        points: route,
+        color: const Color(0xFF2196F3),
+        width: 6.0,
+      ));
 
-    on<CenterOnUserLocation>((event, emit) async {
-      emit(LoadingState());
+      add(AddMarker(
+        markerId: 'origin',
+        position: event.origin,
+        title: 'Origen',
+        icon: await _createCustomMarker('🚗', Colors.green),
+      ));
 
-      try {
-        final location = location_service.Location();
+      add(AddMarker(
+        markerId: 'destination',
+        position: event.destination,
+        title: 'Destino',
+        icon: await _createCustomMarker('🏁', Colors.red),
+      ));
 
-        // Verificar servicios y permisos
-        bool serviceEnabled = await location.serviceEnabled();
-        if (!serviceEnabled) {
-          serviceEnabled = await location.requestService();
-          if (!serviceEnabled) {
-            emit(ErrorState('El servicio de ubicación está deshabilitado'));
-            return;
-          }
-        }
+      emit(state.copyWith(
+        isNavigating: true,
+        currentRoute: route,
+      ));
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al iniciar navegación: ${e.toString()}'));
+    }
+  }
 
-        location_service.PermissionStatus permissionGranted = await location.hasPermission();
-        if (permissionGranted == location_service.PermissionStatus.denied) {
-          permissionGranted = await location.requestPermission();
-          if (permissionGranted != location_service.PermissionStatus.granted) {
-            emit(ErrorState('Permisos de ubicación denegados'));
-            return;
-          }
-        }
+  void _onStopNavigation(StopNavigation event, Emitter<MapState> emit) {
+    // Limpiar ruta
+    add(const RemovePolyline('navigation_route'));
 
-        // Obtener ubicación actual
-        final locationData = await location.getLocation();
+    // Remover markers de navegación
+    add(const RemoveMarker('origin'));
+    add(const RemoveMarker('destination'));
 
-        if (locationData.latitude != null && locationData.longitude != null) {
-          final userPosition = LatLng(locationData.latitude!, locationData.longitude!);
+    emit(state.copyWith(
+      isNavigating: false,
+      currentRoute: const [],
+    ));
+  }
 
-          final userMarker = Marker(
-            markerId: const MarkerId('userLocation'),
-            position: userPosition,
-            infoWindow: const InfoWindow(title: 'Tu ubicación'),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          );
+  void _onUpdateUserLocation(UpdateUserLocation event, Emitter<MapState> emit,) {
+    emit(state.copyWith(
+      userLocation: event.location,
+      userHeading: event.heading,
+    ));
 
-          // Mantener markers existentes y agregar/actualizar el marker del usuario
-          Set<Marker> currentMarkers = {};
-          if (state is LoadedState) {
-            currentMarkers = Set.from((state as LoadedState).markers);
-            // Remover marker anterior del usuario si existe
-            currentMarkers.removeWhere((marker) => marker.markerId.value == 'userLocation');
-          }
-          currentMarkers.add(userMarker);
+    // Si estamos navegando, actualizar el marker del usuario
+    if (state.isNavigating) {
+      add(AddMarker(
+        markerId: 'user_location',
+        position: event.location,
+        title: 'Tu ubicación',
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      ));
+    }
+  }
 
-          Set<Polyline> currentPolylines = {};
-          if (state is LoadedState) {
-            currentPolylines = (state as LoadedState).polylines;
-          }
+  void _onChangeMapType(ChangeMapType event, Emitter<MapState> emit) {
+    emit(state.copyWith(mapType: event.mapType));
+  }
 
-          emit(LoadedState(
-            markers: currentMarkers,
-            polylines: currentPolylines,
-            centerPosition: userPosition,
-          ));
-        } else {
-          emit(ErrorState('No se pudo obtener la ubicación actual'));
-        }
-      } catch (e) {
-        emit(ErrorState('Error al obtener ubicación: $e'));
-      }
-    });
+  Future<bool> _checkLocationPermission() async {
+    final permission = await Permission.location.request();
+    return permission == PermissionStatus.granted;
+  }
 
-    on<GetRoute>((event, emit) async {
-      try {
-        final result = await routeRepository.getRoute(
-          event.routeRequestModel.startLatitude,
-          event.routeRequestModel.startLongitude,
-          event.routeRequestModel.endLatitude,
-          event.routeRequestModel.endLongitude,
-        );
-
-        switch (result) {
-          case Success<Route>():
-            log('TAG: MapBloc - GetRoute - Success: ${result.data}');
-            if (result.data.intersections.isEmpty) {
-              log('TAG: MapBloc - GetRoute - Intersections are empty');
-              return;
-            }
-            final markers = <Marker>{
-              Marker(
-                markerId: const MarkerId('initialPosition'),
-                position: LatLng(result.data.intersections[0].latitude, result.data.intersections[0].longitude),
-                infoWindow: const InfoWindow(title: 'Posición inicial'),
-              ),
-              Marker(
-                markerId: const MarkerId('destinationPosition'),
-                position: LatLng(result.data.intersections[result.data.intersections.length - 1].latitude, result.data.intersections[result.data.intersections.length - 1].longitude),
-                infoWindow: const InfoWindow(title: 'Posición final'),
-              ),
-            };
-            final polyline = Polyline(
-              polylineId: const PolylineId('route'),
-              color: ColorPaletter.warning,
-              width: 5,
-              points: result.data.intersections.map((e) => LatLng(e.latitude, e.longitude)).toList(),
-            );
-
-            emit(LoadedState(markers: markers, polylines: {polyline}));
-
-            break;
-          case Failure<Route>():
-            log('TAG: MapBloc - GetRoute - Failure: ${result.message}');
-            return;
-          case Loading<Route>():
-            log('TAG: MapBloc - GetRoute - Loading');
-            return;
-        }
-      } catch (e) {
-        emit(ErrorState(e.toString()));
-        log('TAG: MapBloc - GetRoute - Error: $e');
-      }
+  void _startLocationTracking() {
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen((position) {
+      add(UpdateUserLocation(
+        LatLng(position.latitude, position.longitude),
+        heading: position.heading,
+      ));
     });
   }
+
+  Future<void> _fitPointsToMap(List<LatLng> points, Emitter<MapState> emit) async {
+    if (state.controller == null || points.isEmpty) return;
+
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final point in points) {
+      minLat = math.min(minLat, point.latitude);
+      maxLat = math.max(maxLat, point.latitude);
+      minLng = math.min(minLng, point.longitude);
+      maxLng = math.max(maxLng, point.longitude);
+    }
+
+    final bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+
+    try {
+      await state.controller!.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, 100.0),
+      );
+    } catch (e) {
+      emit(state.copyWith(error: 'Error al ajustar vista: ${e.toString()}'));
+    }
+  }
+
+  Future<BitmapDescriptor> _createCustomMarker(String text, Color color) async {
+    return BitmapDescriptor.defaultMarkerWithHue(
+      color == Colors.green ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueRed,
+    );
+  }
 }
-
-
-/*
-*
-
-* */

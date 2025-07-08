@@ -43,7 +43,7 @@ class CarpoolDetailsPage extends StatelessWidget {
             
             // Precio
             Text(
-              'S/20.50',
+              'S/5.20',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -66,7 +66,7 @@ class CarpoolDetailsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Av. Primavera 693 (Chacarilla del Estanque)',
+                            'Jockey Plaza',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -113,7 +113,7 @@ class CarpoolDetailsPage extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Clase Matemáticas 1-3pm',
+                            'mate 1 7am-9am',
                             style: TextStyle(
                               color: Colors.grey[400],
                               fontSize: 14,

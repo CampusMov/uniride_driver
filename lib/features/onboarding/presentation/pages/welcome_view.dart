@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/home/domain/repositories/route_repository.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
@@ -122,21 +123,7 @@ class WelcomeView extends StatelessWidget {
                     child: DefaultRoundedTextButton(
                       text: 'Continuar',
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          //Modifique el la routa para entrar mas facil al home Brayan Eliminar
-                          MaterialPageRoute(builder: (context) => BlocProvider(
-                              create: (context) => SelectLocationBloc(),
-                              child: BlocProvider(
-                                create: (context) => MapBloc(
-                                    routeRepository: di.sl<RouteRepository>()
-                                ),
-                                child: BlocProvider(
-                                  create: (context)=> FavoritesBloc(),
-                                  child: const HomePage())
-                              ),
-                            ),),
-                        );
+                        Navigator.pushReplacementNamed(context, ScreensRoutes.enterInstitutionalEmail);
                       },
                     ),
                   ),

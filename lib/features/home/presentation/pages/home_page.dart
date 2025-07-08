@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uniride_driver/core/theme/color_paletter.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/bloc/map/map_state.dart';
-import 'package:uniride_driver/features/home/presentation/pages/create_carpool_page.dart';
-import 'package:uniride_driver/features/home/presentation/pages/details_carpool_page.dart';
-import 'package:uniride_driver/features/home/presentation/pages/position_destination_selection_page.dart';
-import 'package:uniride_driver/features/home/presentation/pages/position_origin_selection_page.dart';
-import 'package:uniride_driver/features/home/presentation/pages/request_passengers_page.dart';
-import 'package:uniride_driver/features/home/presentation/widgets/btns_adduser_and_location_view.dart';
-import 'package:uniride_driver/features/home/presentation/widgets/map_view.dart';
-import 'package:flutter_sliding_up_panel/flutter_sliding_up_panel.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
-import 'package:uniride_driver/core/di/injection_container.dart' as di;
+import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
 
+import '../../../../core/di/injection_container.dart' as di;
+import '../bloc/map/map_bloc.dart';
 import '../bloc/map/map_event.dart';
+import '../bloc/map/map_state.dart';
+import 'dialogs/class_schedule_dialog.dart';
+import 'dialogs/origin_location_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,222 +21,214 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  final SlidingUpPanelController panelController = SlidingUpPanelController();
-  final ScrollController scrollController = ScrollController();
-
-  final GlobalKey<NavigatorState> _panelNavigatorKey = GlobalKey<NavigatorState>();
-
-  double _controlHeight = 450.0; // Altura del panel deslizante
-  bool _isNavigating = false; // Estado para mostrar carga durante navegación
-  bool _isCarpoolStarted = false; // Estado para mantener si el carpool fue iniciado
+  final PanelController _panelController = PanelController();
+  TripState _currentTripState = TripState.creatingCarpool;
+  late CreateCarpoolBloc _createCarpoolBloc;
 
   @override
   void initState() {
     super.initState();
+    _createCarpoolBloc = di.sl<CreateCarpoolBloc>();
   }
 
-  // Método para navegar con carga
-  Future<void> _navigateWithLoading(String routeName) async {
-    setState(() {
-      _isNavigating = true;
-    });
-
-    // Simular carga pequeña
-    await Future.delayed(Duration(milliseconds: 500));
-
-    // Navegar a la nueva página
-    _panelNavigatorKey.currentState?.pushNamed(routeName);
-
-    setState(() {
-      _isNavigating = false;
-    });
-  }
-
-  // Método para navegar a detalles del carpool
-  Future<void> _navigateToDetails() async {
-    setState(() {
-      _isNavigating = true;
-    });
-
-    // Simular carga pequeña
-    await Future.delayed(Duration(milliseconds: 500));
-
-    // Navegar a la página de detalles
-    _panelNavigatorKey.currentState?.pushNamed('/details_carpool');
-
-    setState(() {
-      _isNavigating = false;
-    });
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //Menu de la aplicacion
-      body: Stack(
+      body: MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (context) => MapBloc()),
+            BlocProvider.value(value: _createCarpoolBloc),
+          ],
+        child: Scaffold(
+          body: Stack(
+            children: [
+              _buildSlidingPanel(),
+              _buildLocationButton(),
+              // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
+              _buildOriginLocationDialog(),
+              _buildClassScheduleDialog(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /*
+  * Builds the sliding panel that contains the trip information and controls.
+   */
+  Widget _buildSlidingPanel() {
+    return SlidingUpPanel(
+      controller: _panelController,
+      minHeight: _getMinHeight(),
+      maxHeight: _getMaxHeight(),
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 8,
+          offset: const Offset(0, -2),
+        ),
+      ],
+      panel: _buildPanel(),
+      body: const MapScreen(
+        autoGetUserLocation: true,
+        showMyLocationButton: false,
+      ),
+    );
+  }
+
+  /*
+    * Builds the sliding panel that contains the trip information and controls.
+    * The content of the panel changes based on the current trip state.
+    *
+    * Returns a [Container] with a handle and content based on the trip state.
+  * */
+  Widget _buildPanel() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
         children: [
-          BlocBuilder<MapBloc,MapState>(
-              builder: (context,state){
-                if(state is InitialState){
-
-                  return MapViewWidget(
-                    markers: {},
-                    polylines: {},
-                  );
-
-                }
-                else if (state is LoadingState){
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: ColorPaletter.background,
-                    ),
-                  );
-                } else if(state is LoadedState){
-                  return MapViewWidget(
-                    markers: state.markers,
-                    polylines: state.polylines,);
-                } else if(state is ErrorState){
-                  return Center(
-                    child: Text("Error al cargar el mapa", style: TextStyle(color: ColorPaletter.textPrimary)),
-                  );
-                }
-                return Container(
-                  color: ColorPaletter.error,
-                );
-              }
-          ),
-
-          //Btns de accion flotante para aceptar o rechazar solicitudes de viaje
-          //y mi ubicacion
-          BtnsAddUserAndLocationView(
-              onTapUser: (){
-                _navigateWithLoading('/request_passengers');
-
-              },
-              onTapLocation: (){
-                // Centrar el mapa en la ubicación actual del usuario
-                context.read<MapBloc>().add(const CenterOnUserLocation());
-              }
-          ),
-
-          // Panel deslizante
-          SlidingUpPanelWidget(
-              controlHeight: _controlHeight,
-              anchor: 0.4,
-              panelController: panelController,
-              enableOnTap: true,
-              onTap: () {
-                if (panelController.status == SlidingUpPanelStatus.expanded) {
-                  panelController.collapse();
-                } else {
-                  panelController.expand();
-                }
-              },
-
-              child: Container(
-                decoration: BoxDecoration(
-                  color: ColorPaletter.background,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Navigator(
-                    key: _panelNavigatorKey,
-                    onGenerateRoute: (settings) {
-                      Widget page;
-                      switch (settings.name) {
-                        case '/create_carpool':
-                          page = BlocProvider<CreateCarpoolBloc>(
-                            create: (context) => di.sl<CreateCarpoolBloc>(),
-                            child: CreateCarpoolPage(
-                              isInitiallyStarted: _isCarpoolStarted,
-                              onModeChanged: (started) {
-                                setState(() {
-                                  _isCarpoolStarted = started;
-                                });
-                              },
-                              onNavigateToDetails: () {
-                                _navigateToDetails();
-                              },
-                              onTap: (value) {
-
-                                debugPrint("onTap: $value");
-
-                                //Deacuerdo al valor devuelto por el ontap me lleva a la vista de origin o destination
-                                //True significa que se selecciona el origen, false el destino
-
-                                value ? debugPrint("Seleccionar origen") :
-                                debugPrint("Seleccionar destino");
-
-                                // Usar navegación con carga
-                                value ? _navigateWithLoading('/position_selection_origin') :
-                                _navigateWithLoading('/position_selection_destination');
-
-                              },
-                              onRouteRequest: (routeRequest) {
-                                context.read<MapBloc>()
-                                    .add(GetRoute(routeRequestModel: routeRequest));
-                              },
-                            ),
-                          );
-                          break;
-                        case '/request_passengers':
-                          page = RequestPassengersPage();
-                          break;
-                        case '/details_carpool':
-                          page = CarpoolDetailsPage();
-                          break;
-                        case '/position_selection_origin':
-                          page = PositionSelectionPageOrigin(
-                              onTap: (){
-                                // Navegar a la página de creación de carpool con carga
-                                _navigateWithLoading('/create_carpool');
-                              }
-                          );
-                          break;
-                        case '/position_selection_destination':
-                          page = PositionSelectionPageDestination(
-                              onTap: (){
-                                // Navegar a la página de creación de carpool con carga
-                                _navigateWithLoading('/create_carpool');
-                              }
-                          );
-                          break;
-                        default:
-                          page = BlocProvider<CreateCarpoolBloc>(
-                            create: (context) => di.sl<CreateCarpoolBloc>(),
-                            child: CreateCarpoolPage(
-                                isInitiallyStarted: _isCarpoolStarted,
-                                onModeChanged: (started) {
-                                  setState(() {
-                                    _isCarpoolStarted = started;
-                                  });
-                                },
-                                onNavigateToDetails: () {
-                                  _navigateToDetails();
-                                },
-                                onTap: (value) {
-                                  debugPrint("onTap: $value");
-
-                                  value ? debugPrint("Seleccionar origen") :
-                                  debugPrint("Seleccionar destino");
-
-                                  // Usar navegación con carga
-                                  value ? _navigateWithLoading('/position_selection_origin') :
-                                  _navigateWithLoading('/position_selection_destination');
-                                }
-                            ),
-                          );
-                      }
-                      return MaterialPageRoute(builder: (_) => page);
-                    },
-                  ),
-                ),
-              )
+          _buildPanelHandle(),
+          Expanded(
+            child: _buildPanelContent(),
           ),
         ],
       ),
     );
+  }
+
+  /*
+  * Builds the handle for the sliding panel.
+  * This is a simple container with a fixed width and height,
+   */
+  Widget _buildPanelHandle() {
+    return Container(
+      width: 40,
+      height: 4,
+      margin: const EdgeInsets.only(top: 12, bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  /*
+  * Builds the content of the sliding panel based on the current trip state.
+   */
+  Widget _buildPanelContent() {
+    switch (_currentTripState) {
+      case TripState.creatingCarpool:
+        return Stack(
+          children: [
+            const CreateCarpoolPanel(),
+            const CarpoolCreationResultDialog()
+          ],
+        );
+      case TripState.waitingToStartCarpool:
+        return Placeholder();
+      case TripState.ongoingCarpool:
+        return Placeholder();
+      case TripState.finishedCarpool:
+        return Placeholder();
+      case TripState.cancelledCarpool:
+        return Placeholder();
+    }
+  }
+
+  /*
+  * Builds the floating action button that centers the map on the user's location.
+   */
+  Widget _buildLocationButton() {
+    return Positioned(
+      bottom: _getMinHeight() + 20,
+      right: 16,
+      child: BlocBuilder<MapBloc, MapState>(
+        builder: (context, state) {
+          return FloatingActionButton(
+            onPressed: () {
+              if (state.userLocation != null) {
+                context.read<MapBloc>().add(CenterMap(state.userLocation!));
+              } else {
+                context.read<MapBloc>().add(GetUserLocation());
+              }
+            },
+            backgroundColor: Colors.white,
+            foregroundColor: state.userLocation != null ? Colors.blue : Colors.grey,
+            heroTag: "user_location",
+            child: state.isLoading
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : Icon(state.userLocation != null
+                ? Icons.my_location
+                : Icons.location_searching),
+          );
+        },
+      ),
+    );
+  }
+
+  /*
+  * Builds the dialog for selecting the origin location when creating a carpool.
+   */
+  Widget _buildOriginLocationDialog() {
+    if (_currentTripState != TripState.creatingCarpool) {
+      return const SizedBox.shrink();
+    }
+    return const OriginLocationDialog();
+  }
+
+  /*
+  * Builds the dialog for selecting the class schedule when creating a carpool.
+   */
+  Widget _buildClassScheduleDialog() {
+    if (_currentTripState != TripState.creatingCarpool) {
+      return const SizedBox.shrink();
+    }
+    return const ClassScheduleDialog();
+  }
+
+  /*
+  * Returns the minimum height of the sliding panel based on the current trip state.
+  * This is used to ensure that the panel has enough space for the content
+   */
+  double _getMinHeight() {
+    switch (_currentTripState) {
+      case TripState.creatingCarpool:
+        return 450;
+      case TripState.waitingToStartCarpool:
+        return 400;
+      case TripState.ongoingCarpool:
+        return 350;
+      case TripState.finishedCarpool:
+        return 300;
+      case TripState.cancelledCarpool:
+        return 400;
+    }
+  }
+
+  /*
+  * Returns the maximum height of the sliding panel.
+   */
+  double _getMaxHeight() {
+    return MediaQuery.of(context).size.height * 0.5;
   }
 }
