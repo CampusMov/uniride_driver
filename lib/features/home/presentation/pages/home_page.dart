@@ -10,6 +10,7 @@ import '../../../../core/di/injection_container.dart' as di;
 import '../bloc/map/map_bloc.dart';
 import '../bloc/map/map_event.dart';
 import '../bloc/map/map_state.dart';
+import 'dialogs/class_schedule_dialog.dart';
 import 'dialogs/origin_location_dialog.dart';
 
 class HomePage extends StatefulWidget {
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> {
               _buildLocationButton(),
               // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
               _buildOriginLocationDialog(),
+              _buildClassScheduleDialog(),
             ],
           ),
         ),
@@ -195,13 +197,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   /*
+  * Builds the dialog for selecting the class schedule when creating a carpool.
+   */
+  Widget _buildClassScheduleDialog() {
+    if (_currentTripState != TripState.creatingCarpool) {
+      return const SizedBox.shrink();
+    }
+    return const ClassScheduleDialog();
+  }
+
+  /*
   * Returns the minimum height of the sliding panel based on the current trip state.
   * This is used to ensure that the panel has enough space for the content
    */
   double _getMinHeight() {
     switch (_currentTripState) {
       case TripState.creatingCarpool:
-        return 400;
+        return 450;
       case TripState.waitingToStartCarpool:
         return 400;
       case TripState.ongoingCarpool:
