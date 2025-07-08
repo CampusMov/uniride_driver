@@ -17,6 +17,7 @@ import 'package:uniride_driver/features/home/domain/repositories/route_repositor
 import 'package:uniride_driver/features/home/domain/services/carpool_service.dart';
 import 'package:uniride_driver/features/home/domain/services/route_service.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/carpool/waiting_carpool_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
 
 import '../../features/file/data/datasources/file_management_service_impl.dart';
@@ -27,6 +28,7 @@ import '../../features/home/data/datasources/location_service.dart';
 import '../../features/home/data/datasources/route_service_impl.dart';
 import '../../features/home/data/repositories/location_repository.dart';
 import '../../features/home/presentation/bloc/home/home_bloc.dart';
+import '../../features/home/presentation/bloc/map/map_bloc.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
 import '../../features/profile/data/datasource/vehicle_service_impl.dart';
@@ -164,6 +166,13 @@ Future<void> init() async {
       locationRepository: sl<LocationRepository>(),
     ),
   );
+
+  sl.registerFactory<WaitingCarpoolBloc>(
+      () => WaitingCarpoolBloc(
+        carpoolRepository: sl<CarpoolRepository>(),
+        routeRepository: sl<RouteRepository>(),
+      )
+  );
   
   //! Features - Routes
   sl.registerLazySingleton<RouteRepository>(
@@ -179,6 +188,9 @@ Future<void> init() async {
 
   //! Bloc - Home Page
   sl.registerFactory(() => HomePageBloc());
+
+  //! Bloc - Map
+  sl.registerFactory(() => MapBloc());
 
   //! Core - Already registered in existing init()
   if (!sl.isRegistered<http.Client>()) {
