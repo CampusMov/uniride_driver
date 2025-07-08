@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/home/home_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
 
 import '../../../../../core/di/injection_container.dart' as di;
+import '../../bloc/home/home_state.dart';
 import '../../bloc/map/map_bloc.dart';
 import '../../bloc/map/map_event.dart';
 import '../../bloc/map/map_state.dart';
@@ -22,17 +24,19 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final PanelController _panelController = PanelController();
-  TripState _currentTripState = TripState.creatingCarpool;
   late CreateCarpoolBloc _createCarpoolBloc;
+  late HomePageBloc _homePageBloc;
 
   @override
   void initState() {
     super.initState();
     _createCarpoolBloc = di.sl<CreateCarpoolBloc>();
+    _homePageBloc = HomePageBloc();
   }
 
   @override
   void dispose() {
+    _homePageBloc.close();
     super.dispose();
   }
 
@@ -43,17 +47,22 @@ class _HomePageState extends State<HomePage> {
           providers: [
             BlocProvider(create: (context) => MapBloc()),
             BlocProvider.value(value: _createCarpoolBloc),
+            BlocProvider.value(value: _homePageBloc),
           ],
-        child: Scaffold(
-          body: Stack(
-            children: [
-              _buildSlidingPanel(),
-              _buildLocationButton(),
-              // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
-              _buildOriginLocationDialog(),
-              _buildClassScheduleDialog(),
-            ],
-          ),
+        child: BlocBuilder<HomePageBloc, HomePageState>(
+          builder: (context, homeState) {
+            return Scaffold(
+              body: Stack(
+                children: [
+                  _buildSlidingPanel(homeState.currentTripState),
+                  _buildLocationButton(homeState.currentTripState),
+                  // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
+                  _buildOriginLocationDialog(homeState.currentTripState),
+                  _buildClassScheduleDialog(homeState.currentTripState),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -62,10 +71,10 @@ class _HomePageState extends State<HomePage> {
   /*
   * Builds the sliding panel that contains the trip information and controls.
    */
-  Widget _buildSlidingPanel() {
+  Widget _buildSlidingPanel(TripState currentTripState) {
     return SlidingUpPanel(
       controller: _panelController,
-      minHeight: _getMinHeight(),
+      minHeight: _getMinHeight(currentTripState),
       maxHeight: _getMaxHeight(),
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(20),
@@ -78,7 +87,7 @@ class _HomePageState extends State<HomePage> {
           offset: const Offset(0, -2),
         ),
       ],
-      panel: _buildPanel(),
+      panel: _buildPanel(currentTripState),
       body: const MapScreen(
         autoGetUserLocation: true,
         showMyLocationButton: false,
@@ -92,7 +101,7 @@ class _HomePageState extends State<HomePage> {
     *
     * Returns a [Container] with a handle and content based on the trip state.
   * */
-  Widget _buildPanel() {
+  Widget _buildPanel(TripState currentTripState) {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.black,
@@ -105,7 +114,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildPanelHandle(),
           Expanded(
-            child: _buildPanelContent(),
+            child: _buildPanelContent(currentTripState),
           ),
         ],
       ),
@@ -131,8 +140,8 @@ class _HomePageState extends State<HomePage> {
   /*
   * Builds the content of the sliding panel based on the current trip state.
    */
-  Widget _buildPanelContent() {
-    switch (_currentTripState) {
+  Widget _buildPanelContent(TripState currentTripState) {
+    switch (currentTripState) {
       case TripState.creatingCarpool:
         return Stack(
           children: [
@@ -154,9 +163,9 @@ class _HomePageState extends State<HomePage> {
   /*
   * Builds the floating action button that centers the map on the user's location.
    */
-  Widget _buildLocationButton() {
+  Widget _buildLocationButton(TripState currentTripState) {
     return Positioned(
-      bottom: _getMinHeight() + 20,
+      bottom: _getMinHeight(currentTripState) + 20,
       right: 16,
       child: BlocBuilder<MapBloc, MapState>(
         builder: (context, state) {
@@ -189,8 +198,8 @@ class _HomePageState extends State<HomePage> {
   /*
   * Builds the dialog for selecting the origin location when creating a carpool.
    */
-  Widget _buildOriginLocationDialog() {
-    if (_currentTripState != TripState.creatingCarpool) {
+  Widget _buildOriginLocationDialog(TripState currentTripState) {
+    if (currentTripState != TripState.creatingCarpool) {
       return const SizedBox.shrink();
     }
     return const OriginLocationDialog();
@@ -199,8 +208,8 @@ class _HomePageState extends State<HomePage> {
   /*
   * Builds the dialog for selecting the class schedule when creating a carpool.
    */
-  Widget _buildClassScheduleDialog() {
-    if (_currentTripState != TripState.creatingCarpool) {
+  Widget _buildClassScheduleDialog(TripState currentTripState) {
+    if (currentTripState != TripState.creatingCarpool) {
       return const SizedBox.shrink();
     }
     return const ClassScheduleDialog();
@@ -210,8 +219,8 @@ class _HomePageState extends State<HomePage> {
   * Returns the minimum height of the sliding panel based on the current trip state.
   * This is used to ensure that the panel has enough space for the content
    */
-  double _getMinHeight() {
-    switch (_currentTripState) {
+  double _getMinHeight(TripState currentTripState) {
+    switch (currentTripState) {
       case TripState.creatingCarpool:
         return 450;
       case TripState.waitingToStartCarpool:
