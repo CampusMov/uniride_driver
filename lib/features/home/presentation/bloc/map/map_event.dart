@@ -85,15 +85,15 @@ class CreatePolyline extends MapEvent {
   final String polylineId;
   final List<LatLng> points;
   final Color color;
-  final double width;
+  final int width;
   final List<PatternItem>? patterns;
 
   const CreatePolyline({
-    required this.polylineId,
+    this.polylineId = 'route',
     required this.points,
     this.color = const Color(0xFF2196F3),
-    this.width = 5.0,
-    this.patterns,
+    this.width = 5,
+    this.patterns = const [],
   });
 
   @override
