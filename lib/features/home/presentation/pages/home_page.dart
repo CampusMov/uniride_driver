@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
-import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
-import 'package:uniride_driver/features/profile/domain/repositories/profile_class_schedule_repository.dart';
 
 import '../../../../core/di/injection_container.dart' as di;
-import '../../../auth/domain/repositories/user_repository.dart';
-import '../../data/repositories/location_repository.dart';
 import '../bloc/map/map_bloc.dart';
 import '../bloc/map/map_event.dart';
 import '../bloc/map/map_state.dart';
+import 'dialogs/origin_location_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,18 +22,36 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final PanelController _panelController = PanelController();
   TripState _currentTripState = TripState.creatingCarpool;
+  late CreateCarpoolBloc _createCarpoolBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _createCarpoolBloc = di.sl<CreateCarpoolBloc>();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocProvider(
-        create: (context) => MapBloc(),
-        child: Stack(
-          children: [
-            _buildSlidingPanel(),
-            _buildLocationButton(),
-            // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
+      body: MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (context) => MapBloc()),
+            BlocProvider.value(value: _createCarpoolBloc),
           ],
+        child: Scaffold(
+          body: Stack(
+            children: [
+              _buildSlidingPanel(),
+              _buildLocationButton(),
+              // if (_currentTripState == TripState.ongoingCarpool || _currentTripState == TripState.waitingToStartCarpool)  TODO: Add button to open passengers request dialog
+              _buildOriginLocationDialog(),
+            ],
+          ),
         ),
       ),
     );
@@ -117,19 +132,11 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPanelContent() {
     switch (_currentTripState) {
       case TripState.creatingCarpool:
-        return BlocProvider(
-          create: (context) => CreateCarpoolBloc(
-            carpoolRepository: di.sl<CarpoolRepository>(),
-            userRepository: di.sl<UserRepository>(),
-            profileClassScheduleRepository: di.sl<ProfileClassScheduleRepository>(),
-            locationRepository: di.sl<LocationRepository>(),
-          ),
-          child: Stack(
-            children: [
-              const CreateCarpoolPanel(),
-              const CarpoolCreationResultDialog()
-            ],
-          ),
+        return Stack(
+          children: [
+            const CreateCarpoolPanel(),
+            const CarpoolCreationResultDialog()
+          ],
         );
       case TripState.waitingToStartCarpool:
         return Placeholder();
@@ -142,6 +149,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  /*
+  * Builds the floating action button that centers the map on the user's location.
+   */
   Widget _buildLocationButton() {
     return Positioned(
       bottom: _getMinHeight() + 20,
@@ -172,6 +182,16 @@ class _HomePageState extends State<HomePage> {
         },
       ),
     );
+  }
+
+  /*
+  * Builds the dialog for selecting the origin location when creating a carpool.
+   */
+  Widget _buildOriginLocationDialog() {
+    if (_currentTripState != TripState.creatingCarpool) {
+      return const SizedBox.shrink();
+    }
+    return const OriginLocationDialog();
   }
 
   /*
