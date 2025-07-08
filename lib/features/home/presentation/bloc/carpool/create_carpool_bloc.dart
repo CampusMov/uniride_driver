@@ -209,10 +209,12 @@ class CreateCarpoolBloc extends Bloc<CreateCarpoolEvent, CreateCarpoolState> {
 
   // Origin Location Dialog Events
   void _onOpenDialogToSelectOriginLocation(OpenDialogToSelectOriginLocation event, Emitter<CreateCarpoolState> emit) {
+    log('TAG: CreateCarpoolBloc: Opening dialog to select origin location');
     emit(state.copyWith(isSelectOriginLocationDialogOpen: true));
   }
 
   void _onCloseDialogToSelectOriginLocation(CloseDialogToSelectOriginLocation event, Emitter<CreateCarpoolState> emit) {
+    log('TAG: CreateCarpoolBloc: Closing dialog to select origin location');
     emit(state.copyWith(
       isSelectOriginLocationDialogOpen: false,
       locationPredictions: [],

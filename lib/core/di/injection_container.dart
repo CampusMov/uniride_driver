@@ -155,7 +155,7 @@ Future<void> init() async {
     ),
   );
 
-  sl.registerLazySingleton<CreateCarpoolBloc>(
+  sl.registerFactory<CreateCarpoolBloc>(
         () => CreateCarpoolBloc(
       carpoolRepository: sl<CarpoolRepository>(),
       userRepository: sl<UserRepository>(),
