@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/class_schedule.dart';
@@ -55,11 +57,27 @@ class ClassScheduleResponseModel {
   }
 
   TimeOfDay _parseTimeOfDay(String? timeString) {
-    if (timeString == null) return const TimeOfDay(hour: 0, minute: 0);
+    if (timeString == null || timeString.isEmpty) {
+      return const TimeOfDay(hour: 0, minute: 0);
+    }
+
     try {
-      final dateTime = DateTime.parse(timeString);
-      return TimeOfDay.fromDateTime(dateTime);
+      final parts = timeString.split(':');
+
+      if (parts.length >= 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+
+        if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+          return TimeOfDay(hour: hour, minute: minute);
+        }
+      }
+
+      log('TAG - ClassScheduleResponseModel: ⚠️ Invalid time format: $timeString');
+      return const TimeOfDay(hour: 0, minute: 0);
+
     } catch (e) {
+      log('TAG - ClassScheduleResponseModel: ❌ Error parsing time: $timeString - Error: $e');
       return const TimeOfDay(hour: 0, minute: 0);
     }
   }
