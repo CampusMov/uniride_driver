@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
+import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
+import 'package:uniride_driver/features/profile/domain/repositories/profile_class_schedule_repository.dart';
 
+import '../../../../core/di/injection_container.dart' as di;
+import '../../../auth/domain/repositories/user_repository.dart';
+import '../../data/repositories/location_repository.dart';
 import '../bloc/map/map_bloc.dart';
 import '../bloc/map/map_event.dart';
 import '../bloc/map/map_state.dart';
@@ -110,7 +117,20 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPanelContent() {
     switch (_currentTripState) {
       case TripState.creatingCarpool:
-        return Placeholder();
+        return BlocProvider(
+          create: (context) => CreateCarpoolBloc(
+            carpoolRepository: di.sl<CarpoolRepository>(),
+            userRepository: di.sl<UserRepository>(),
+            profileClassScheduleRepository: di.sl<ProfileClassScheduleRepository>(),
+            locationRepository: di.sl<LocationRepository>(),
+          ),
+          child: Stack(
+            children: [
+              const CreateCarpoolPanel(),
+              const CarpoolCreationResultDialog()
+            ],
+          ),
+        );
       case TripState.waitingToStartCarpool:
         return Placeholder();
       case TripState.ongoingCarpool:
@@ -161,7 +181,7 @@ class _HomePageState extends State<HomePage> {
   double _getMinHeight() {
     switch (_currentTripState) {
       case TripState.creatingCarpool:
-        return 300;
+        return 400;
       case TripState.waitingToStartCarpool:
         return 400;
       case TripState.ongoingCarpool:
@@ -177,6 +197,6 @@ class _HomePageState extends State<HomePage> {
   * Returns the maximum height of the sliding panel.
    */
   double _getMaxHeight() {
-    return MediaQuery.of(context).size.height * 0.8;
+    return MediaQuery.of(context).size.height * 0.5;
   }
 }
