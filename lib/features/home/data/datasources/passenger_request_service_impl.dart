@@ -46,4 +46,60 @@ class PassengerRequestServiceImpl implements PassengerRequestService {
     }
   }
 
+  @override
+  Future<PassengerRequestResponseModel> acceptPassengerRequest(String passengerRequestId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/passenger-requests/$passengerRequestId/accept');
+
+      log('TAG: PassengerRequestService - POST accept passenger request');
+      log('TAG: PassengerRequestService - URL: $uri');
+
+      final response = await client.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      log('TAG: PassengerRequestService - Response status: ${response.statusCode}');
+      log('TAG: PassengerRequestService - Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return Future.value(PassengerRequestResponseModel.fromJson(jsonDecode(response.body)));
+      } else {
+        log('TAG: PassengerRequestService - Error accepting passenger request: ${response.body}');
+        throw Exception('Error accepting passenger request: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('TAG: PassengerRequestService - Exception accepting passenger request: $e');
+      throw Exception('Failed to accept passenger request: $e');
+    }
+  }
+
+  @override
+  Future<PassengerRequestResponseModel> rejectPassengerRequest(String passengerRequestId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/passenger-requests/$passengerRequestId/reject');
+
+      log('TAG: PassengerRequestService - POST reject passenger request');
+      log('TAG: PassengerRequestService - URL: $uri');
+
+      final response = await client.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      log('TAG: PassengerRequestService - Response status: ${response.statusCode}');
+      log('TAG: PassengerRequestService - Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return Future.value(PassengerRequestResponseModel.fromJson(jsonDecode(response.body)));
+      } else {
+        log('TAG: PassengerRequestService - Error rejecting passenger request: ${response.body}');
+        throw Exception('Error rejecting passenger request: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('TAG: PassengerRequestService - Exception rejecting passenger request: $e');
+      throw Exception('Failed to reject passenger request: $e');
+    }
+  }
+
 }

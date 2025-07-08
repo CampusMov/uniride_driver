@@ -33,4 +33,35 @@ class PassengerRequestRepositoryImpl implements PassengerRequestRepository {
       return Failure('An unexpected error occurred: ${e.toString()}');
     }
   }
+
+  @override
+  Future<Resource<PassengerRequest>> acceptPassengerRequest(String passengerRequestId) async {
+    try {
+      final passengerRequestResponse = await passengerRequestService.acceptPassengerRequest(passengerRequestId);
+      log('TAG: PassengerRequestRepositoryImpl: Passenger request accepted successfully for ID: $passengerRequestId');
+      return Success(passengerRequestResponse.toDomain());
+    } on IOException catch (e) {
+      log('TAG: PassengerRequestRepositoryImpl: Network error while accepting passenger request for ID: $passengerRequestId');
+      return Failure('Network error: ${e.toString()}');
+    } catch (e) {
+      log('TAG: PassengerRequestRepositoryImpl: Unexpected error while accepting passenger request for ID: $passengerRequestId');
+      return Failure('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Resource<PassengerRequest>> rejectPassengerRequest(String passengerRequestId) async {
+    try {
+      final passengerRequestResponse = await passengerRequestService.rejectPassengerRequest(passengerRequestId);
+      log('TAG: PassengerRequestRepositoryImpl: Passenger request rejected successfully for ID: $passengerRequestId');
+      return Success(passengerRequestResponse.toDomain());
+    } on IOException catch (e) {
+      log('TAG: PassengerRequestRepositoryImpl: Network error while rejecting passenger request for ID: $passengerRequestId');
+      return Failure('Network error: ${e.toString()}');
+    } catch (e) {
+      log(
+          'TAG: PassengerRequestRepositoryImpl: Unexpected error while rejecting passenger request for ID: $passengerRequestId');
+      return Failure('An unexpected error occurred: ${e.toString()}');
+    }
+  }
 }
