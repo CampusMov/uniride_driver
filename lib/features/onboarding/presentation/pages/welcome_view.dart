@@ -124,19 +124,9 @@ class WelcomeView extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          //Modifique el la routa para entrar mas facil al home Brayan Eliminar
-                          MaterialPageRoute(builder: (context) => BlocProvider(
-                              create: (context) => SelectLocationBloc(),
-                              child: BlocProvider(
-                                create: (context) => MapBloc(
-                                    routeRepository: di.sl<RouteRepository>()
-                                ),
-                                child: BlocProvider(
-                                  create: (context)=> FavoritesBloc(),
-                                  child: const HomePage())
-                              ),
-                            ),),
-                        );
+                          MaterialPageRoute(
+                            builder: (context) => const EnterInstitutionalEmailPage(),
+                          ),);
                       },
                     ),
                   ),
