@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/pages/home_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/home/home_page.dart';
 import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/enter_institutional_email_page.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/verification_code_page.dart';
@@ -66,9 +66,7 @@ class MainApp extends StatelessWidget {
       ScreensRoutes.searchCarpool : (context) => BlocProvider(
         create: (context) => SelectLocationBloc(),
         child: BlocProvider(
-          create: (context) => MapBloc(
-              routeRepository: di.sl<RouteRepository>()
-          ),
+          create: (context) => MapBloc(),
           child: BlocProvider(
             create: (context) => FavoritesBloc(),
             child: const HomePage(),
