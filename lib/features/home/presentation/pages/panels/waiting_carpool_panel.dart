@@ -6,8 +6,51 @@ import '../../bloc/carpool/waiting_carpool_bloc.dart';
 import '../../bloc/carpool/waiting_carpool_event.dart';
 import '../../bloc/carpool/waiting_carpool_state.dart';
 
-class WaitingCarpoolPanel extends StatelessWidget {
+class WaitingCarpoolPanel extends StatefulWidget {
   const WaitingCarpoolPanel({super.key});
+
+  @override
+  State<WaitingCarpoolPanel> createState() => _WaitingCarpoolPanelState();
+}
+
+class _WaitingCarpoolPanelState extends State<WaitingCarpoolPanel>
+    with SingleTickerProviderStateMixin {
+  bool _isRouteExpanded = false;
+  late AnimationController _animationController;
+  late Animation<double> _arrowRotation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _arrowRotation = Tween<double>(
+      begin: 0,
+      end: 0.5,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleRouteExpansion() {
+    setState(() {
+      _isRouteExpanded = !_isRouteExpanded;
+      if (_isRouteExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,39 +77,110 @@ class WaitingCarpoolPanel extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        return Stack(
+          children: [
+            // Scrolleable content
+            _buildScrollableContent(state),
 
-              // Header
-              _buildHeader(state),
-
-              const SizedBox(height: 20),
-
-              if (state.isLoadingCarpool)
-                _buildLoadingSection('Cargando información del carpool...')
-              else if (state.hasCarpool) ...[
-
-                // Carpool info
-                _buildCarpoolInfo(context, state),
-
-                const SizedBox(height: 16),
-
-                // Route info
-                _buildRouteInfo(context, state),
-
-                const SizedBox(height: 20),
-
-                // Action buttons
-                _buildActionButtons(context, state),
-              ] else
-                _buildErrorSection(context, 'No se pudo cargar la información del carpool'),
-            ],
-          ),
+            // Fixed bottom section with action buttons
+            _buildFixedBottomSection(context, state),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildScrollableContent(WaitingCarpoolState state) {
+    return Positioned.fill(
+      bottom: 120, // Leave space for fixed bottom section
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            _buildHeader(state),
+
+            const SizedBox(height: 20),
+
+            if (state.isLoadingCarpool)
+              _buildLoadingSection('Cargando información del carpool...')
+            else if (state.hasCarpool) ...[
+              // Carpool info
+              _buildCarpoolInfo(context, state),
+
+              const SizedBox(height: 16),
+
+              // Collapsible route info
+              _buildCollapsibleRouteInfo(state),
+
+              const SizedBox(height: 20), // Extra space at bottom
+            ] else
+              _buildErrorSection(context, 'No se pudo cargar la información del carpool'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFixedBottomSection(BuildContext context, WaitingCarpoolState state) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        height: 145,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withOpacity(0.0),
+              Colors.black.withOpacity(0.7),
+              Colors.black,
+            ],
+            stops: const [0.0, 0.3, 1.0],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          child: Column(
+            children: [
+              // Start Carpool Button (Fixed)
+              DefaultRoundedTextButton(
+                text: 'Iniciar Carpool',
+                loadingText: 'Iniciando...',
+                isLoading: state.isStartingCarpool,
+                enabled: state.hasRoute && !state.isLoading,
+                onPressed: () => context.read<WaitingCarpoolBloc>().add(const StartCarpool()),
+                backgroundColor: const Color(0xFF4CAF50),
+                textColor: Colors.white,
+                disabledTextColor: Colors.white,
+              ),
+
+              const SizedBox(height: 8),
+
+              // Cancel link (subtle text)
+              GestureDetector(
+                onTap: state.isLoading ? null : () => _showCancelDialog(context),
+                child: Text(
+                  'Cancelar carpool',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: state.isLoading
+                        ? const Color(0xFF666666)
+                        : const Color(0xFFE53935),
+                    decoration: TextDecoration.underline,
+                    decorationColor: state.isLoading
+                        ? const Color(0xFF666666)
+                        : const Color(0xFFE53935),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -130,7 +244,6 @@ class WaitingCarpoolPanel extends StatelessWidget {
 
     return Column(
       children: [
-
         // Origin
         _buildLocationRow(
           icon: Icons.my_location,
@@ -148,7 +261,7 @@ class WaitingCarpoolPanel extends StatelessWidget {
           icon: Icons.school,
           iconColor: const Color(0xFF2196F3),
           title: carpool.destination.name,
-          subtitle: '${carpool.startedClassTime.format(context)} - ${carpool.endedClassTime.format(context)}',
+          subtitle: '${carpool.startedClassTime.format(context)} - ${carpool.endedClassTime.format(context)} ${carpool.classDay}',
           tag: 'Destino',
           tagColor: const Color(0xFF1976D2),
         ),
@@ -158,8 +271,187 @@ class WaitingCarpoolPanel extends StatelessWidget {
         // Additional info
         _buildInfoRow('Asientos disponibles', '${carpool.maxPassengers}'),
         _buildInfoRow('Radio de emparejamiento', '${carpool.radius}m'),
-        _buildInfoRow('Día de clase', carpool.classDay),
       ],
+    );
+  }
+
+  Widget _buildCollapsibleRouteInfo(WaitingCarpoolState state) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF333333),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          // Route header (always visible)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _toggleRouteExpansion,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.route,
+                      color: state.hasRoute ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        state.isLoadingRoute
+                            ? 'Generando ruta...'
+                            : state.hasRoute
+                            ? 'Ruta Generada'
+                            : 'Ruta no disponible',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (state.isLoadingRoute)
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    else if (state.hasRoute)
+                      Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CAF50),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Lista',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    AnimatedBuilder(
+                      animation: _arrowRotation,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _arrowRotation.value * 3.14159,
+                          child: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Expandable content
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: _isRouteExpanded ? null : 0,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _isRouteExpanded ? 1.0 : 0.0,
+              child: _buildRouteDetails(state),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouteDetails(WaitingCarpoolState state) {
+    if (state.isLoadingRoute) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: Text(
+            'Generando ruta...',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFFB3B3B3),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (!state.hasRoute) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Divider(color: Color(0xFF555555), height: 1),
+            const SizedBox(height: 12),
+            const Text(
+              'No se pudo generar la ruta',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFFE53935),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                context.read<WaitingCarpoolBloc>().add(const GenerateRoute());
+              },
+              child: const Text(
+                'Reintentar',
+                style: TextStyle(
+                  color: Color(0xFF2196F3),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final route = state.route!;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          const Divider(color: Color(0xFF555555), height: 1),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildRouteDetail(
+                'Distancia',
+                '${route.totalDistance.toStringAsFixed(1)} km',
+                Icons.straighten,
+              ),
+              _buildRouteDetail(
+                'Duración',
+                '${route.totalDuration.toInt()} min',
+                Icons.access_time,
+              ),
+              _buildRouteDetail(
+                'Puntos',
+                '${state.routeCoordinates!.length}',
+                Icons.place,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -262,124 +554,6 @@ class WaitingCarpoolPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteInfo(BuildContext context, WaitingCarpoolState state) {
-    if (state.isLoadingRoute) {
-      return _buildLoadingSection('Generando ruta...');
-    }
-
-    if (!state.hasRoute) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF333333),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.route,
-              color: Color(0xFFFF9800),
-              size: 24,
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Ruta no disponible',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                context.read<WaitingCarpoolBloc>().add(const GenerateRoute());
-              },
-              child: const Text(
-                'Reintentar',
-                style: TextStyle(
-                  color: Color(0xFF2196F3),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final route = state.route!;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF333333),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.route,
-                color: Color(0xFF4CAF50),
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Ruta Generada',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'Lista',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildRouteDetail(
-                'Distancia',
-                '${route.totalDistance.toStringAsFixed(1)} km',
-                Icons.straighten,
-              ),
-              _buildRouteDetail(
-                'Duración',
-                '${route.totalDuration.toInt()} min',
-                Icons.access_time,
-              ),
-              _buildRouteDetail(
-                'Puntos',
-                '${state.routeCoordinates!.length}',
-                Icons.place,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildRouteDetail(String label, String value, IconData icon) {
     return Column(
       children: [
@@ -404,39 +578,6 @@ class WaitingCarpoolPanel extends StatelessWidget {
             fontSize: 12,
             color: Color(0xFFB3B3B3),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context, WaitingCarpoolState state) {
-    return Column(
-      children: [
-
-        // Start Carpool Button
-        DefaultRoundedTextButton(
-          text: 'Iniciar Carpool',
-          loadingText: 'Iniciando...',
-          isLoading: state.isStartingCarpool,
-          enabled: state.hasRoute && !state.isLoading,
-          onPressed: () => context.read<WaitingCarpoolBloc>().add(const StartCarpool()),
-          backgroundColor: const Color(0xFF4CAF50),
-          textColor: Colors.white,
-          disabledTextColor: Colors.white,
-        ),
-
-        const SizedBox(height: 12),
-
-        // Cancel Carpool Button
-        DefaultRoundedTextButton(
-          text: 'Cancelar Carpool',
-          loadingText: 'Cancelando...',
-          isLoading: state.isCancellingCarpool,
-          enabled: !state.isLoading,
-          onPressed: () => _showCancelDialog(context),
-          backgroundColor: const Color(0xFFE53935),
-          textColor: Colors.white,
-          disabledTextColor: Colors.white,
         ),
       ],
     );
