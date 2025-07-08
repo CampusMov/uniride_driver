@@ -14,6 +14,7 @@ class WaitingCarpoolState extends Equatable {
   final List<LatLng>? routeCoordinates;
   final String? errorMessage;
   final String? successMessage;
+  final LatLng? userLocation;
 
   const WaitingCarpoolState({
     this.isLoadingCarpool = false,
@@ -25,6 +26,7 @@ class WaitingCarpoolState extends Equatable {
     this.routeCoordinates,
     this.errorMessage,
     this.successMessage,
+    this.userLocation,
   });
 
   bool get hasCarpool => carpool != null;
@@ -41,6 +43,7 @@ class WaitingCarpoolState extends Equatable {
     List<LatLng>? routeCoordinates,
     String? errorMessage,
     String? successMessage,
+    LatLng? userLocation,
   }) {
     return WaitingCarpoolState(
       isLoadingCarpool: isLoadingCarpool ?? this.isLoadingCarpool,
@@ -52,6 +55,7 @@ class WaitingCarpoolState extends Equatable {
       routeCoordinates: routeCoordinates ?? this.routeCoordinates,
       errorMessage: errorMessage,
       successMessage: successMessage,
+      userLocation: userLocation ?? this.userLocation,
     );
   }
 
@@ -73,5 +77,6 @@ class WaitingCarpoolState extends Equatable {
     routeCoordinates,
     errorMessage,
     successMessage,
+    userLocation,
   ];
 }

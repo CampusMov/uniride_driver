@@ -31,3 +31,5 @@ class CancelCarpool extends WaitingCarpoolEvent {
 class RefreshCarpoolData extends WaitingCarpoolEvent {
   const RefreshCarpoolData();
 }
+
+class GetUserLocation extends WaitingCarpoolEvent {}

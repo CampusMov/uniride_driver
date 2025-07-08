@@ -2,8 +2,12 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:uniride_driver/features/home/domain/entities/carpool.dart';
 import 'package:uniride_driver/features/home/domain/entities/route.dart';
+import 'package:uniride_driver/features/shared/domain/entities/location.dart';
 
 import '../../../../../core/events/app_event_bus.dart';
 import '../../../../../core/events/app_events.dart';
@@ -28,6 +32,9 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
     on<StartCarpool>(_onStartCarpool);
     on<CancelCarpool>(_onCancelCarpool);
     on<RefreshCarpoolData>(_onRefreshCarpoolData);
+    on<GetUserLocation>(_onGetUserLocation);
+
+    add(GetUserLocation());
 
     _eventBusSubscription = AppEventBus().on<CarpoolCreatedSuccessfully>().listen((event) {
       add(LoadCarpool(event.carpoolId));
@@ -149,25 +156,51 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
       return;
     }
 
+    if (state.userLocation == null) {
+      emit(state.copyWith(errorMessage: 'Ubicación del usuario no disponible'));
+      return;
+    }
+
     emit(state.copyWith(isStartingCarpool: true, errorMessage: null));
 
     try {
-      // TODO: Implement start carpool logic
-      // This might involve updating carpool status to IN_PROGRESS
-
       log('TAG: WaitingCarpoolBloc - Starting carpool: ${state.carpool!.id}');
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      final result = await carpoolRepository.startCarpool(
+        state.carpool!.id,
+        Location(
+          latitude: state.userLocation!.latitude,
+          longitude: state.userLocation!.longitude,
+        ),
+      );
 
-      emit(state.copyWith(
-        isStartingCarpool: false,
-        successMessage: 'Carpool iniciado exitosamente',
-      ));
+      switch (result) {
+        case Success<Carpool>():
+          final startedCarpool = result.data;
+          log('TAG: WaitingCarpoolBloc - Carpool started successfully: ${startedCarpool.id}');
 
-      AppEventBus().emit(const TripStateChangeRequested(TripState.ongoingCarpool));
+          emit(state.copyWith(
+            isStartingCarpool: false,
+            carpool: startedCarpool,
+            successMessage: 'Carpool iniciado exitosamente',
+          ));
 
-      log('TAG: WaitingCarpoolBloc - Carpool started successfully');
+          // Emit event to change trip state to ongoing
+          AppEventBus().emit(const TripStateChangeRequested(TripState.ongoingCarpool));
+          break;
+
+        case Failure<Carpool>():
+          log('TAG: WaitingCarpoolBloc - Failed to start carpool: ${result.message}');
+          emit(state.copyWith(
+            isStartingCarpool: false,
+            errorMessage: 'Error al iniciar carpool: ${result.message}',
+          ));
+          break;
+
+        case Loading<Carpool>():
+          log('TAG: WaitingCarpoolBloc - Already starting carpool');
+          break;
+      }
     } catch (e) {
       log('TAG: WaitingCarpoolBloc - Error starting carpool: $e');
       emit(state.copyWith(
@@ -219,6 +252,40 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
     if (state.carpool != null) {
       add(LoadCarpool(state.carpool!.id));
     }
+  }
+
+  Future<void> _onGetUserLocation(GetUserLocation event, Emitter<WaitingCarpoolState> emit) async {
+    try {
+      log('TAG: WaitingCarpoolBloc - Getting user location');
+
+      final permission = await _checkLocationPermission();
+
+      if (!permission) {
+        emit(state.copyWith(errorMessage: 'Permiso de ubicación denegado'));
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+
+      final userLocation = LatLng(position.latitude, position.longitude);
+
+      log('TAG: WaitingCarpoolBloc - User location obtained: $userLocation');
+
+      emit(state.copyWith(
+        userLocation: userLocation,
+      ));
+
+    } catch (e) {
+      log('TAG: WaitingCarpoolBloc - Error getting user location: $e');
+      emit(state.copyWith(errorMessage: 'Error al obtener ubicación del usuario: ${e.toString()}'));
+    }
+  }
+
+  Future<bool> _checkLocationPermission() async {
+    final permission = await Permission.location.request();
+    return permission == PermissionStatus.granted;
   }
 
   @override
