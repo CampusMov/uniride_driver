@@ -4,6 +4,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/home/home_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/pages/dialogs/passenger_request_dialog.dart';
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/waiting_carpool_panel.dart';
@@ -75,6 +76,7 @@ class _HomePageState extends State<HomePage> {
                   _buildActionButtons(homeState.currentTripState),
                   _buildOriginLocationDialog(homeState.currentTripState),
                   _buildClassScheduleDialog(homeState.currentTripState),
+                  _buildPassengerRequestDialog(homeState.currentTripState),
                 ],
               ),
             );
@@ -310,6 +312,14 @@ class _HomePageState extends State<HomePage> {
       return const SizedBox.shrink();
     }
     return const ClassScheduleDialog();
+  }
+
+  Widget _buildPassengerRequestDialog(TripState currentTripState) {
+    if (currentTripState != TripState.waitingToStartCarpool &&
+        currentTripState != TripState.ongoingCarpool) {
+      return const SizedBox.shrink();
+    }
+    return const PassengerRequestDialog();
   }
 
   /*
