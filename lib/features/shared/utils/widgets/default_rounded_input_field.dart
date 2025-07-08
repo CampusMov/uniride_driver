@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class DefaultRoundedInputField extends StatelessWidget {
   final String value;
   final ValueChanged<String> onValueChange;
@@ -40,11 +39,9 @@ class DefaultRoundedInputField extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(3.0),
-        child: GestureDetector(
-          onTap: enabled ? onTap : null,
-          child: AbsorbPointer(
-            absorbing: onTap != null,
-            child: TextField(
+        child: Stack(
+          children: [
+            TextField(
               controller: TextEditingController(text: value)
                 ..selection = TextSelection.fromPosition(
                   TextPosition(offset: value.length),
@@ -117,7 +114,18 @@ class DefaultRoundedInputField extends StatelessWidget {
                     : null,
               ),
             ),
-          ),
+
+            if (onTap != null)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: onTap,
+                  behavior: HitTestBehavior.translucent,
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
