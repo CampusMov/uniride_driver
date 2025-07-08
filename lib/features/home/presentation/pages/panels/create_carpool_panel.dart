@@ -70,11 +70,6 @@ class CreateCarpoolPanel extends StatelessWidget {
         },
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF3F4042),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
           child: Row(
             children: [
               Container(
@@ -150,11 +145,6 @@ class CreateCarpoolPanel extends StatelessWidget {
         },
         child: Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF3F4042),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
           child: Row(
             children: [
               Container(
