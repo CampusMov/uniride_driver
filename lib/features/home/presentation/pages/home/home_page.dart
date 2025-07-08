@@ -6,12 +6,12 @@ import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_ca
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
 
-import '../../../../core/di/injection_container.dart' as di;
-import '../bloc/map/map_bloc.dart';
-import '../bloc/map/map_event.dart';
-import '../bloc/map/map_state.dart';
-import 'dialogs/class_schedule_dialog.dart';
-import 'dialogs/origin_location_dialog.dart';
+import '../../../../../core/di/injection_container.dart' as di;
+import '../../bloc/map/map_bloc.dart';
+import '../../bloc/map/map_event.dart';
+import '../../bloc/map/map_state.dart';
+import '../dialogs/class_schedule_dialog.dart';
+import '../dialogs/origin_location_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
