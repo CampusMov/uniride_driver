@@ -212,44 +212,45 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPassengerRequestButton() {
     return BlocBuilder<PassengerRequestBloc, PassengerRequestState>(
       builder: (context, state) {
-        return FloatingActionButton(
-          onPressed: () {
-            context.read<PassengerRequestBloc>().add(const OpenRequestsManagementDialog());
-          },
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
-          heroTag: "passenger_requests",
-          child: Stack(
-            children: [
-              const Icon(Icons.people),
-              // Badge for pending requests count
-              if (state.pendingRequestsCount > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
+        return Stack(
+          clipBehavior: Clip.none, // Permite que el badge se salga del área
+          children: [
+            FloatingActionButton(
+              onPressed: () {
+                context.read<PassengerRequestBloc>().add(const OpenRequestsManagementDialog());
+              },
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              heroTag: "passenger_requests",
+              child: const Icon(Icons.people),
+            ),
+            if (state.pendingRequestsCount > 0)
+              Positioned(
+                right: -8,
+                top: -8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  child: Text(
+                    '${state.pendingRequestsCount}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${state.pendingRequestsCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         );
       },
     );
