@@ -145,7 +145,7 @@ class _HomePageState extends State<HomePage> {
       case TripState.creatingCarpool:
         return Stack(
           children: [
-            const CreateCarpoolPanel(),
+            CreateCarpoolPanel(homePageBloc: _homePageBloc),
             const CarpoolCreationResultDialog()
           ],
         );

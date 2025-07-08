@@ -4,12 +4,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/utils/resource.dart';
 import '../../../../shared/utils/widgets/default_rounded_input_field.dart';
 import '../../../../shared/utils/widgets/default_rounded_text_button.dart';
+import '../../../domain/entities/routing-matching/enum_trip_state.dart';
 import '../../bloc/carpool/create_carpool_bloc.dart';
 import '../../bloc/carpool/create_carpool_event.dart';
 import '../../bloc/carpool/create_carpool_state.dart';
+import '../../bloc/home/home_bloc.dart';
+import '../../bloc/home/home_event.dart';
 
 class CreateCarpoolPanel extends StatelessWidget {
-  const CreateCarpoolPanel({super.key});
+  final HomePageBloc homePageBloc;
+
+  const CreateCarpoolPanel({
+    super.key,
+    required this.homePageBloc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +247,7 @@ class CreateCarpoolPanel extends StatelessWidget {
               ),
             ),
 
-            Container(
+            SizedBox(
               width: 40,
               height: 40,
               child: Center(
@@ -296,7 +304,7 @@ class CreateCarpoolPanel extends StatelessWidget {
               ),
             ),
 
-            Container(
+            SizedBox(
               width: 60,
               height: 40,
               child: Center(
@@ -359,7 +367,11 @@ class CarpoolCreationResultDialog extends StatelessWidget {
                 duration: Duration(seconds: 3),
               ),
             );
+
+            final homePageBloc = context.read<HomePageBloc>();
+            homePageBloc.add(const TripStateChanged(TripState.waitingToStartCarpool));
           } else if (state.carpoolCreationResult is Failure) {
+            final failure = state.carpoolCreationResult as Failure;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('❌ Error: ${state.carpoolCreationResult}'),
