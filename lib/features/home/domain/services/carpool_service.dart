@@ -3,4 +3,5 @@ import 'package:uniride_driver/features/home/data/model/carpool_response_model.d
 
 abstract class CarpoolService {
   Future<CarpoolResponseModel> createCarpool(CarpoolRequestModel request);
+  Future<CarpoolResponseModel> getCarpoolById(String carpoolId);
 }

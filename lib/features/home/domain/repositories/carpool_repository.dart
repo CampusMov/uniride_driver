@@ -4,4 +4,5 @@ import '../entities/carpool.dart';
 
 abstract class CarpoolRepository {
   Future<Resource<Carpool>> createCarpool(Carpool request);
+  Future<Resource<Carpool>> getCarpoolById(String carpoolId);
 }
