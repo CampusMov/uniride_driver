@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/events/app_event_bus.dart';
+import '../../../../../core/events/app_events.dart';
 import '../../../../../core/utils/resource.dart';
 import '../../../../shared/utils/widgets/default_rounded_input_field.dart';
 import '../../../../shared/utils/widgets/default_rounded_text_button.dart';
@@ -8,15 +10,10 @@ import '../../../domain/entities/routing-matching/enum_trip_state.dart';
 import '../../bloc/carpool/create_carpool_bloc.dart';
 import '../../bloc/carpool/create_carpool_event.dart';
 import '../../bloc/carpool/create_carpool_state.dart';
-import '../../bloc/home/home_bloc.dart';
-import '../../bloc/home/home_event.dart';
 
 class CreateCarpoolPanel extends StatelessWidget {
-  final HomePageBloc homePageBloc;
-
   const CreateCarpoolPanel({
     super.key,
-    required this.homePageBloc,
   });
 
   @override
@@ -358,8 +355,11 @@ class CarpoolCreationResultDialog extends StatelessWidget {
     return BlocListener<CreateCarpoolBloc, CreateCarpoolState>(
       listener: (context, state) {
         if (state.carpoolCreationResult != null) {
-          // Mostrar resultado
+          // Show the result of the carpool creation
           if (state.carpoolCreationResult is Success) {
+            final success = state.carpoolCreationResult as Success;
+            final carpool = success.data;
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('✅ Carpool creado exitosamente'),
@@ -368,20 +368,24 @@ class CarpoolCreationResultDialog extends StatelessWidget {
               ),
             );
 
-            final homePageBloc = context.read<HomePageBloc>();
-            homePageBloc.add(const TripStateChanged(TripState.waitingToStartCarpool));
+            // Emit an event to update the trip state
+            AppEventBus().emit(const TripStateChangeRequested(TripState.waitingToStartCarpool));
+
+            // Emit an event to notify that the carpool was created successfully
+            AppEventBus().emit(CarpoolCreatedSuccessfully(carpool.id));
+
           } else if (state.carpoolCreationResult is Failure) {
             final failure = state.carpoolCreationResult as Failure;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('❌ Error: ${state.carpoolCreationResult}'),
+                content: Text('❌ Error: ${failure.message}'),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 4),
               ),
             );
           }
 
-          // Limpiar el resultado después de mostrar
+          // Clear the result after showing it
           context.read<CreateCarpoolBloc>().add(const ClearCarpoolCreationResult());
         }
       },

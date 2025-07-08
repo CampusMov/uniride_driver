@@ -6,8 +6,10 @@ import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_ca
 import 'package:uniride_driver/features/home/presentation/bloc/home/home_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
+import 'package:uniride_driver/features/home/presentation/pages/panels/waiting_carpool_panel.dart';
 
 import '../../../../../core/di/injection_container.dart' as di;
+import '../../bloc/carpool/waiting_carpool_bloc.dart';
 import '../../bloc/home/home_state.dart';
 import '../../bloc/map/map_bloc.dart';
 import '../../bloc/map/map_event.dart';
@@ -26,17 +28,24 @@ class _HomePageState extends State<HomePage> {
   final PanelController _panelController = PanelController();
   late CreateCarpoolBloc _createCarpoolBloc;
   late HomePageBloc _homePageBloc;
+  late MapBloc _mapBloc;
+  late WaitingCarpoolBloc _waitingCarpoolBloc;
 
   @override
   void initState() {
     super.initState();
     _createCarpoolBloc = di.sl<CreateCarpoolBloc>();
-    _homePageBloc = HomePageBloc();
+    _homePageBloc = di.sl<HomePageBloc>();
+    _mapBloc = di.sl<MapBloc>();
+    _waitingCarpoolBloc = di.sl<WaitingCarpoolBloc>();
   }
 
   @override
   void dispose() {
     _homePageBloc.close();
+    _mapBloc.close();
+    _waitingCarpoolBloc.close();
+    _createCarpoolBloc.close();
     super.dispose();
   }
 
@@ -45,9 +54,10 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: MultiBlocProvider(
           providers: [
-            BlocProvider(create: (context) => MapBloc()),
+            BlocProvider.value(value: _mapBloc),
             BlocProvider.value(value: _createCarpoolBloc),
             BlocProvider.value(value: _homePageBloc),
+            BlocProvider.value(value: _waitingCarpoolBloc),
           ],
         child: BlocBuilder<HomePageBloc, HomePageState>(
           builder: (context, homeState) {
@@ -145,12 +155,16 @@ class _HomePageState extends State<HomePage> {
       case TripState.creatingCarpool:
         return Stack(
           children: [
-            CreateCarpoolPanel(homePageBloc: _homePageBloc),
+            const CreateCarpoolPanel(),
             const CarpoolCreationResultDialog()
           ],
         );
       case TripState.waitingToStartCarpool:
-        return Placeholder();
+        return Stack(
+          children: [
+            const WaitingCarpoolPanel(),
+          ],
+        );
       case TripState.ongoingCarpool:
         return Placeholder();
       case TripState.finishedCarpool:
@@ -224,7 +238,7 @@ class _HomePageState extends State<HomePage> {
       case TripState.creatingCarpool:
         return 450;
       case TripState.waitingToStartCarpool:
-        return 400;
+        return 900;
       case TripState.ongoingCarpool:
         return 350;
       case TripState.finishedCarpool:
