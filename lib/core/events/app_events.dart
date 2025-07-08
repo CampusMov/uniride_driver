@@ -4,6 +4,8 @@ import 'package:equatable/equatable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
 
+import '../../features/home/domain/entities/passenger_request.dart';
+
 // Events for the application, which are used to trigger changes in the state of the app.
 abstract class AppEvent extends Equatable {
   const AppEvent();
@@ -79,4 +81,70 @@ class RemovePolylineRequested extends AppEvent {
 
 class ClearAllPolylinesRequested extends AppEvent {
   const ClearAllPolylinesRequested();
+}
+
+// Events related to WebSocket for each microservice
+class WebSocketServiceConnected extends AppEvent {
+  final String serviceName;
+
+  const WebSocketServiceConnected(this.serviceName);
+
+  @override
+  List<Object?> get props => [serviceName];
+}
+
+class WebSocketServiceDisconnected extends AppEvent {
+  final String serviceName;
+
+  const WebSocketServiceDisconnected(this.serviceName);
+
+  @override
+  List<Object?> get props => [serviceName];
+}
+
+class WebSocketServiceError extends AppEvent {
+  final String serviceName;
+  final String error;
+
+  const WebSocketServiceError(this.serviceName, this.error);
+
+  @override
+  List<Object?> get props => [serviceName, error];
+}
+
+// Events related to Passenger Requests
+class PassengerRequestReceived extends AppEvent {
+  final PassengerRequest passengerRequest;
+
+  const PassengerRequestReceived(this.passengerRequest);
+
+  @override
+  List<Object?> get props => [passengerRequest];
+}
+
+class PassengerRequestAccepted extends AppEvent {
+  final PassengerRequest passengerRequest;
+
+  const PassengerRequestAccepted(this.passengerRequest);
+
+  @override
+  List<Object?> get props => [passengerRequest];
+}
+
+class PassengerRequestRejected extends AppEvent {
+  final PassengerRequest passengerRequest;
+
+  const PassengerRequestRejected(this.passengerRequest);
+
+  @override
+  List<Object?> get props => [passengerRequest];
+}
+
+class PassengerRequestCancelled extends AppEvent {
+  final PassengerRequest passengerRequest;
+
+  const PassengerRequestCancelled(this.passengerRequest);
+
+  @override
+  List<Object?> get props => [passengerRequest];
 }
