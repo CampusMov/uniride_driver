@@ -148,34 +148,6 @@ class ClearRequestSelections extends PassengerRequestEvent {
   const ClearRequestSelections();
 }
 
-/// Batch accept selected requests
-class BatchAcceptRequests extends PassengerRequestEvent {
-  final List<String> requestIds;
-  final String? message;
-
-  const BatchAcceptRequests({
-    required this.requestIds,
-    this.message,
-  });
-
-  @override
-  List<Object?> get props => [requestIds, message];
-}
-
-/// Batch reject selected requests
-class BatchRejectRequests extends PassengerRequestEvent {
-  final List<String> requestIds;
-  final String? reason;
-
-  const BatchRejectRequests({
-    required this.requestIds,
-    this.reason,
-  });
-
-  @override
-  List<Object?> get props => [requestIds, reason];
-}
-
 /// Clear success/error messages
 class ClearMessages extends PassengerRequestEvent {
   const ClearMessages();

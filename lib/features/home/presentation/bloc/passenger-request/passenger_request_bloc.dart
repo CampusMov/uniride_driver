@@ -36,8 +36,6 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
     // Action events
     on<AcceptPassengerRequest>(_onAcceptRequest);
     on<RejectPassengerRequest>(_onRejectRequest);
-    on<BatchAcceptRequests>(_onBatchAccept);
-    on<BatchRejectRequests>(_onBatchReject);
 
     // Dialog management events
     on<OpenRequestsManagementDialog>(_onOpenDialog);
@@ -173,7 +171,7 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
 
   // ========== SINGLE ACTIONS ==========
 
-  void _onAcceptRequest(AcceptPassengerRequest event, Emitter<PassengerRequestState> emit) async {
+  Future<void> _onAcceptRequest(AcceptPassengerRequest event, Emitter<PassengerRequestState> emit) async {
     if (state.isProcessing) {
       log('TAG: PassengerRequestBloc - Cannot accept, already processing');
       return;
@@ -192,24 +190,41 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
 
     try {
       log('TAG: PassengerRequestBloc - Accepting passenger request: ${event.passengerRequestId}');
+      final result = await passengerRequestRepository.acceptPassengerRequest(event.passengerRequestId);
 
-      await _sendWebSocketMessage('/app/passenger-request/accept', {
-        'passengerRequestId': event.passengerRequestId,
-        'message': event.message,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
+      switch (result) {
+        case Success<PassengerRequest>():
+          final acceptedRequest = result.data;
+          log('TAG: PassengerRequestBloc - Passenger request accepted: ${acceptedRequest.id}');
 
-      // Remove request ID from processing set
-      final finalProcessingIds = Set<String>.from(state.processingRequestIds);
-      finalProcessingIds.remove(event.passengerRequestId);
+          // Update state with accepted request
+          emit(state.updateRequest(acceptedRequest));
 
-      emit(state.copyWith(
-        isProcessingAccept: false,
-        processingRequestIds: finalProcessingIds,
-        successMessage: 'Solicitud aceptada exitosamente',
-      ));
+          // Remove request ID from processing set
+          final finalProcessingIds = Set<String>.from(state.processingRequestIds);
+          finalProcessingIds.remove(event.passengerRequestId);
 
-      log('TAG: PassengerRequestBloc - Passenger request accepted successfully');
+          emit(state.copyWith(
+            isProcessingAccept: false,
+            processingRequestIds: finalProcessingIds,
+            successMessage: 'Solicitud aceptada exitosamente',
+          ));
+
+          break;
+
+        case Failure<PassengerRequest>():
+          log('TAG: PassengerRequestBloc - Error accepting passenger request: ${result.message}');
+          emit(state.copyWith(
+            isProcessingAccept: false,
+            processingRequestIds: updatedProcessingIds,
+            errorMessage: 'Error al aceptar la solicitud: ${result.message}',
+          ));
+          break;
+
+        case Loading<PassengerRequest>():
+          log('TAG: PassengerRequestBloc - Already processing accept request');
+          break;
+      }
 
     } catch (e) {
       log('TAG: PassengerRequestBloc - Error accepting passenger request: $e');
@@ -244,24 +259,41 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
 
     try {
       log('TAG: PassengerRequestBloc - Rejecting passenger request: ${event.passengerRequestId}');
+      final result = await passengerRequestRepository.rejectPassengerRequest(event.passengerRequestId);
 
-      await _sendWebSocketMessage('/app/passenger-request/reject', {
-        'passengerRequestId': event.passengerRequestId,
-        'reason': event.reason,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
+      switch (result) {
+        case Success<PassengerRequest>():
+          final rejectedRequest = result.data;
+          log('TAG: PassengerRequestBloc - Passenger request rejected: ${rejectedRequest.id}');
 
-      // Remove request ID from processing set
-      final finalProcessingIds = Set<String>.from(state.processingRequestIds);
-      finalProcessingIds.remove(event.passengerRequestId);
+          // Update state with rejected request
+          emit(state.updateRequest(rejectedRequest));
 
-      emit(state.copyWith(
-        isProcessingReject: false,
-        processingRequestIds: finalProcessingIds,
-        successMessage: 'Solicitud rechazada',
-      ));
+          // Remove request ID from processing set
+          final finalProcessingIds = Set<String>.from(state.processingRequestIds);
+          finalProcessingIds.remove(event.passengerRequestId);
 
-      log('TAG: PassengerRequestBloc - Passenger request rejected successfully');
+          emit(state.copyWith(
+            isProcessingReject: false,
+            processingRequestIds: finalProcessingIds,
+            successMessage: 'Solicitud rechazada exitosamente',
+          ));
+
+          break;
+
+        case Failure<PassengerRequest>():
+          log('TAG: PassengerRequestBloc - Error rejecting passenger request: ${result.message}');
+          emit(state.copyWith(
+            isProcessingReject: false,
+            processingRequestIds: updatedProcessingIds,
+            errorMessage: 'Error al rechazar la solicitud: ${result.message}',
+          ));
+          break;
+
+        case Loading<PassengerRequest>():
+          log('TAG: PassengerRequestBloc - Already processing reject request');
+          break;
+      }
 
     } catch (e) {
       log('TAG: PassengerRequestBloc - Error rejecting passenger request: $e');
@@ -273,92 +305,6 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
         isProcessingReject: false,
         processingRequestIds: finalProcessingIds,
         errorMessage: 'Error al rechazar la solicitud: ${e.toString()}',
-      ));
-    }
-  }
-
-  // ========== BATCH ACTIONS ==========
-
-  void _onBatchAccept(BatchAcceptRequests event, Emitter<PassengerRequestState> emit) async {
-    if (state.isProcessing || event.requestIds.isEmpty) {
-      log('TAG: PassengerRequestBloc - Cannot batch accept, already processing or no requests');
-      return;
-    }
-
-    emit(state.copyWith(
-      isBatchProcessing: true,
-      processingRequestIds: event.requestIds.toSet(),
-      errorMessage: null,
-      successMessage: null,
-    ));
-
-    try {
-      log('TAG: PassengerRequestBloc - Batch accepting ${event.requestIds.length} requests');
-
-      await _sendWebSocketMessage('/app/passenger-request/batch-accept', {
-        'passengerRequestIds': event.requestIds,
-        'message': event.message,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
-
-      emit(state.copyWith(
-        isBatchProcessing: false,
-        processingRequestIds: {},
-        selectedRequestIds: {}, // Clear selections after batch operation
-        successMessage: '${event.requestIds.length} solicitudes aceptadas exitosamente',
-      ));
-
-      log('TAG: PassengerRequestBloc - Batch accept completed successfully');
-
-    } catch (e) {
-      log('TAG: PassengerRequestBloc - Error in batch accept: $e');
-
-      emit(state.copyWith(
-        isBatchProcessing: false,
-        processingRequestIds: {},
-        errorMessage: 'Error al aceptar solicitudes en lote: ${e.toString()}',
-      ));
-    }
-  }
-
-  void _onBatchReject(BatchRejectRequests event, Emitter<PassengerRequestState> emit) async {
-    if (state.isProcessing || event.requestIds.isEmpty) {
-      log('TAG: PassengerRequestBloc - Cannot batch reject, already processing or no requests');
-      return;
-    }
-
-    emit(state.copyWith(
-      isBatchProcessing: true,
-      processingRequestIds: event.requestIds.toSet(),
-      errorMessage: null,
-      successMessage: null,
-    ));
-
-    try {
-      log('TAG: PassengerRequestBloc - Batch rejecting ${event.requestIds.length} requests');
-
-      await _sendWebSocketMessage('/app/passenger-request/batch-reject', {
-        'passengerRequestIds': event.requestIds,
-        'reason': event.reason,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
-
-      emit(state.copyWith(
-        isBatchProcessing: false,
-        processingRequestIds: {},
-        selectedRequestIds: {}, // Clear selections after batch operation
-        successMessage: '${event.requestIds.length} solicitudes rechazadas',
-      ));
-
-      log('TAG: PassengerRequestBloc - Batch reject completed successfully');
-
-    } catch (e) {
-      log('TAG: PassengerRequestBloc - Error in batch reject: $e');
-
-      emit(state.copyWith(
-        isBatchProcessing: false,
-        processingRequestIds: {},
-        errorMessage: 'Error al rechazar solicitudes en lote: ${e.toString()}',
       ));
     }
   }
@@ -445,18 +391,6 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
   void _onMarkAsViewed(MarkRequestAsViewed event, Emitter<PassengerRequestState> emit) {
     // TODO: Implement mark as viewed logic if needed
     log('TAG: PassengerRequestBloc - Marking request as viewed: ${event.passengerRequestId}');
-  }
-
-  // ========== HELPER METHODS ==========
-
-  Future<void> _sendWebSocketMessage(String destination, Map<String, dynamic> payload) async {
-    final webSocketManager = WebSocketManager();
-
-    /*await webSocketManager.sendMessage(
-      serviceName: '${ApiConstants.webSocketUrl}${ApiConstants.routingMatchingServiceName}',
-      destination: destination,
-      payload: payload,
-    );*/
   }
 
   // ========== CLEANUP ==========
