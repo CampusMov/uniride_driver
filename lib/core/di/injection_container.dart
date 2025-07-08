@@ -26,6 +26,7 @@ import '../../features/file/domain/services/file_management_service.dart';
 import '../../features/home/data/datasources/location_service.dart';
 import '../../features/home/data/datasources/route_service_impl.dart';
 import '../../features/home/data/repositories/location_repository.dart';
+import '../../features/home/presentation/bloc/home/home_bloc.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
 import '../../features/profile/data/datasource/vehicle_service_impl.dart';
@@ -175,6 +176,9 @@ Future<void> init() async {
         baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
       )
   );
+
+  //! Bloc - Home Page
+  sl.registerFactory(() => HomePageBloc());
 
   //! Core - Already registered in existing init()
   if (!sl.isRegistered<http.Client>()) {
