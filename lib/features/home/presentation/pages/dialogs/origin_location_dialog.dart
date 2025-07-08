@@ -40,28 +40,34 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
           return const SizedBox.shrink();
         }
 
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.8,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2C2C2C),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                // Header of the dialog
-                _buildDialogHeader(context),
-
-                // Field to search for locations
-                _buildSearchField(context),
-
-                // Results list
-                Expanded(
-                  child: _buildResultsList(context, state),
+        return Positioned.fill(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.1,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
-              ],
+              ),
+              child: Column(
+                children: [
+                  // Header of the dialog
+                  _buildDialogHeader(context),
+
+                  // Field to search for locations
+                  _buildSearchField(context),
+
+                  // Results list
+                  Expanded(
+                    child: _buildResultsList(context, state),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -71,24 +77,31 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
 
   Widget _buildDialogHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.only(
+        top: 40,
+        left: 20,
+        right: 20,
+        bottom: 16,
+      ),
       decoration: const BoxDecoration(
-        color: Color(0xFF1A1A1A),
+        color: Colors.black,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
       ),
       child: Row(
         children: [
+          const SizedBox(width: 32),
           const Expanded(
             child: Text(
               'Ingresa tu punto de partida',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
           GestureDetector(
@@ -96,10 +109,11 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
               context.read<CreateCarpoolBloc>().add(
                 const CloseDialogToSelectOriginLocation(),
               );
+              _searchController.text = '';
             },
             child: Container(
-              width: 32,
-              height: 32,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
@@ -186,7 +200,7 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.only(top: 10, bottom: 20),
       itemCount: state.locationPredictions.length,
       itemBuilder: (context, index) {
         final prediction = state.locationPredictions[index];
@@ -260,15 +274,8 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
 
   Widget _buildLocationItem(BuildContext context, prediction, int index) {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF3F4042),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -306,7 +313,7 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        prediction.description,
+                        prediction.description ?? 'Ubicación',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -320,10 +327,13 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
                 ),
 
                 // Icono de selección
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.3),
-                  size: 16,
+                Container(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white.withOpacity(0.3),
+                    size: 16,
+                  ),
                 ),
               ],
             ),
