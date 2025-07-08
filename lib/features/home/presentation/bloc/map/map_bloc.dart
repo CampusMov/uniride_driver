@@ -5,12 +5,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../../../core/events/app_event_bus.dart';
+import '../../../../../core/events/app_events.dart';
 import 'map_event.dart';
 import 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
   StreamSubscription<Position>? _positionStreamSubscription;
   Timer? _locationUpdateTimer;
+  late StreamSubscription _eventBusSubscription;
 
   MapBloc() : super(MapState.initial) {
     on<MapInitialized>(_onMapInitialized);
@@ -28,6 +31,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<StopNavigation>(_onStopNavigation);
     on<UpdateUserLocation>(_onUpdateUserLocation);
     on<ChangeMapType>(_onChangeMapType);
+
+    _eventBusSubscription = AppEventBus().on<AddPolylineRequested>().listen((event) {
+      add(CreatePolyline(
+        polylineId: event.polylineId,
+        points: event.coordinates,
+        color: event.color,
+        width: event.width,
+      ));
+    });
   }
 
   @override
@@ -214,7 +226,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         polylineId: 'navigation_route',
         points: route,
         color: const Color(0xFF2196F3),
-        width: 6.0,
+        width: 6,
       ));
 
       add(AddMarker(

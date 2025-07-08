@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:uniride_driver/core/utils/resource.dart';
 import 'package:uniride_driver/features/home/data/model/carpool_request_model.dart';
+import 'package:uniride_driver/features/home/data/model/location_request_model.dart';
+import 'package:uniride_driver/features/shared/domain/entities/location.dart';
 
 import '../../domain/entities/carpool.dart';
 import '../../domain/repositories/carpool_repository.dart';
@@ -33,6 +35,54 @@ class CarpoolRepositoryImpl implements CarpoolRepository {
       return const Failure('Server error occurred');
     } catch (e) {
       log('TAG: CarpoolRepository - Unexpected error while creating carpool: $e');
+      return Failure('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Resource<Carpool>> getCarpoolById(String carpoolId) async {
+    try {
+      log('TAG: CarpoolRepository - Fetching carpool by ID: $carpoolId');
+
+      final carpoolResponse = await carpoolService.getCarpoolById(carpoolId);
+
+      final carpool = carpoolResponse.toDomain();
+
+      log('TAG: CarpoolRepository - Successfully fetched carpool with ID: ${carpool.id}');
+      return Success(carpool);
+    } on SocketException {
+      log('TAG: CarpoolRepository - Network error while fetching carpool');
+      return const Failure('No internet connection');
+    } on HttpException {
+      log('TAG: CarpoolRepository - HTTP error while fetching carpool');
+      return const Failure('Server error occurred');
+    } catch (e) {
+      log('TAG: CarpoolRepository - Unexpected error while fetching carpool: $e');
+      return Failure('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Resource<Carpool>> startCarpool(String carpoolId, Location request) async {
+    try {
+      log('TAG: CarpoolRepository - Starting carpool with ID: $carpoolId at location: ${request.name}');
+
+      final requestModel = LocationRequestModel.fromDomain(request);
+
+      final carpoolResponse = await carpoolService.startCarpool(carpoolId, requestModel);
+
+      final carpool = carpoolResponse.toDomain();
+
+      log('TAG: CarpoolRepository - Successfully started carpool with ID: ${carpool.id}');
+      return Success(carpool);
+    } on SocketException {
+      log('TAG: CarpoolRepository - Network error while starting carpool');
+      return const Failure('No internet connection');
+    } on HttpException {
+      log('TAG: CarpoolRepository - HTTP error while starting carpool');
+      return const Failure('Server error occurred');
+    } catch (e) {
+      log('TAG: CarpoolRepository - Unexpected error while starting carpool: $e');
       return Failure('An unexpected error occurred: ${e.toString()}');
     }
   }
