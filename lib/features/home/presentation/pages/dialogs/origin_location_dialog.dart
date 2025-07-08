@@ -277,6 +277,7 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
             context.read<CreateCarpoolBloc>().add(
               OriginLocationSelected(prediction),
             );
+            _searchController.text = '';
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -314,18 +315,6 @@ class _OriginLocationDialogState extends State<OriginLocationDialog> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (prediction.structuredFormatting?.secondaryText != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          prediction.structuredFormatting!.secondaryText!,
-                          style: const TextStyle(
-                            color: Color(0xFFB3B3B3),
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
                     ],
                   ),
                 ),
