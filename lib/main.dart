@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/pages/home_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/home/home_page.dart';
 import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/enter_institutional_email_page.dart';
 import 'package:uniride_driver/features/auth/presentation/pages/verification_code_page.dart';
@@ -18,7 +18,7 @@ import 'package:uniride_driver/features/profile/presentantion/pages/register_pro
 import 'package:uniride_driver/firebase_options.dart';
 
 import 'core/di/injection_container.dart' as di;
-import 'features/home/domain/repositories/route_repository.dart';
+import 'core/websocket/websocket_manager.dart';
 import 'features/profile/presentantion/pages/register_profile_full_name_page.dart';
 import 'features/profile/presentantion/pages/register_profile_list_sections_page.dart';
 import 'features/profile/presentantion/pages/register_profile_vehicle_info_page.dart';
@@ -34,6 +34,9 @@ void main() async {
 
   // Initialize dependencies
   await di.init();
+
+  // Initialize WebSocket Manager
+  _initializeWebSocketManager();
 
   runApp(const MainApp());
 }
@@ -74,9 +77,7 @@ class MainApp extends StatelessWidget {
       ScreensRoutes.searchCarpool : (context) => BlocProvider(
         create: (context) => SelectLocationBloc(),
         child: BlocProvider(
-          create: (context) => MapBloc(
-              routeRepository: di.sl<RouteRepository>()
-          ),
+          create: (context) => MapBloc(),
           child: BlocProvider(
             create: (context) => FavoritesBloc(),
             child: const HomePage(),
@@ -85,4 +86,9 @@ class MainApp extends StatelessWidget {
       ),
     });
   }
+}
+
+void _initializeWebSocketManager() {
+  final _ = WebSocketManager();
+  debugPrint('TAG: Main - WebSocketManager initialized and ready');
 }

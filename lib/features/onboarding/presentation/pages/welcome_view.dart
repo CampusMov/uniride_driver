@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uniride_driver/core/navigation/screens_routes.dart';
 import 'package:uniride_driver/features/home/domain/repositories/route_repository.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/favorites/favorites_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/map/map_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/select_location/select_location_bloc.dart';
-import 'package:uniride_driver/features/home/presentation/pages/home_page.dart';
+import 'package:uniride_driver/features/home/presentation/pages/home/home_page.dart';
 import '../../../../core/di/injection_container.dart' as di;
 import '../../../auth/presentation/pages/enter_institutional_email_page.dart';
 import '../../../shared/utils/widgets/circle_indicator.dart';
@@ -122,11 +123,7 @@ class WelcomeView extends StatelessWidget {
                     child: DefaultRoundedTextButton(
                       text: 'Continuar',
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EnterInstitutionalEmailPage(),
-                          ),);
+                        Navigator.pushReplacementNamed(context, ScreensRoutes.enterInstitutionalEmail);
                       },
                     ),
                   ),
