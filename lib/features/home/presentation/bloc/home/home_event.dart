@@ -8,6 +8,12 @@ abstract class HomePageEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class InitializeHomePage extends HomePageEvent {
+  const InitializeHomePage();
+  @override
+  List<Object> get props => [];
+}
+
 class TripStateChanged extends HomePageEvent {
   final TripState tripState;
 
