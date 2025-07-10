@@ -80,7 +80,7 @@ class RouteCarpoolServiceImpl implements RouteCarpoolService {
       log('TAG: RouteCarpoolService - URL: $uri');
       log('TAG: RouteCarpoolService - Request body: ${jsonEncode(request.toJson())}');
 
-      final response = await client.post(
+      final response = await client.put(
         uri,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.toJson()),
