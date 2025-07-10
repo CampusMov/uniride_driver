@@ -10,13 +10,16 @@ import 'package:uniride_driver/features/auth/domain/repositories/user_repository
 import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
 import 'package:uniride_driver/features/home/data/datasources/carpool_service_impl.dart';
+import 'package:uniride_driver/features/home/data/datasources/way_point_service_impl.dart';
 import 'package:uniride_driver/features/home/data/repositories/carpool_repository_impl.dart';
 import 'package:uniride_driver/features/home/data/repositories/route_repository_impl.dart';
 import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
 import 'package:uniride_driver/features/home/domain/repositories/route_carpool_repository.dart';
 import 'package:uniride_driver/features/home/domain/repositories/route_repository.dart';
+import 'package:uniride_driver/features/home/domain/repositories/way_point_repository.dart';
 import 'package:uniride_driver/features/home/domain/services/carpool_service.dart';
 import 'package:uniride_driver/features/home/domain/services/route_service.dart';
+import 'package:uniride_driver/features/home/domain/services/way_point_service.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/waiting_carpool_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
@@ -30,6 +33,7 @@ import '../../features/home/data/datasources/passenger_request_service_impl.dart
 import '../../features/home/data/datasources/route_carpool_repository_impl.dart';
 import '../../features/home/data/datasources/route_carpool_service_impl.dart';
 import '../../features/home/data/datasources/route_service_impl.dart';
+import '../../features/home/data/datasources/way_point_repository_impl.dart';
 import '../../features/home/data/repositories/location_repository.dart';
 import '../../features/home/data/repositories/passenger_request_repository_impl.dart';
 import '../../features/home/domain/repositories/passenger_request_repository.dart';
@@ -181,6 +185,8 @@ Future<void> init() async {
       () => WaitingCarpoolBloc(
         carpoolRepository: sl<CarpoolRepository>(),
         routeRepository: sl<RouteRepository>(),
+        routeCarpoolRepository: sl<RouteCarpoolRepository>(),
+        wayPointRepository: sl<WayPointRepository>(),
       )
   );
 
@@ -231,6 +237,18 @@ Future<void> init() async {
 
   sl.registerLazySingleton<RouteCarpoolService>(
       () => RouteCarpoolServiceImpl(
+        client: sl(),
+        baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
+      )
+  );
+
+  //! Features - Waypoints
+  sl.registerLazySingleton<WayPointRepository>(
+      () => WayPointRepositoryImpl(wayPointService: sl())
+  );
+
+  sl.registerLazySingleton<WayPointService>(
+      () => WayPointServiceImpl(
         client: sl(),
         baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
       )
