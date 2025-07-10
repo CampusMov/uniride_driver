@@ -6,4 +6,5 @@ abstract class CarpoolService {
   Future<CarpoolResponseModel> createCarpool(CarpoolRequestModel request);
   Future<CarpoolResponseModel> getCarpoolById(String carpoolId);
   Future<CarpoolResponseModel> startCarpool(String carpoolId, LocationRequestModel request);
+  Future<CarpoolResponseModel> finishCarpool(String carpoolId);
 }

@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:uniride_driver/features/auth/data/models/auth_verification_code_response_model.dart';
+import 'package:uniride_driver/features/auth/data/models/user_response_model.dart';
 
 import '../../domain/services/auth_service.dart';
 
@@ -48,4 +50,19 @@ class AuthServiceImpl implements AuthService {
       throw Exception('Error al verificar el código');
     }
   }
+
+  @override
+  Future<UserResponseModel> getUserById(String userId) async {
+    final uri = Uri.parse('$baseUrl/auth/institutional-email-verification/$userId');
+
+    final response = await client.get(uri);
+
+    if (response.statusCode == 200) {
+      return UserResponseModel.fromJson(jsonDecode(response.body));
+    } else {
+      log('TAG: AuthServiceImpl: Error al obtener el usuario: ${response.body}');
+      throw Exception('Error al obtener el usuario: ${response.body}');
+    }
+  }
+
 }

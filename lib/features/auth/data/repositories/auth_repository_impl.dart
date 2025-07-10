@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:uniride_driver/core/utils/resource.dart';
 import 'package:uniride_driver/features/auth/data/models/auth_verification_response.dart';
+import 'package:uniride_driver/features/auth/domain/entities/user.dart';
 import 'package:uniride_driver/features/auth/domain/repositories/auth_repository.dart';
 import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 
@@ -29,6 +30,18 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Success(null);
     } catch (e) {
       log('TAG: AuthRepositoryImpl: Error sending verification email: $e');
+      return Failure(e.toString());
+    }
+  }
+
+  @override
+  Future<Resource<User>> getUserById(String userId) async {
+    try{
+      final response = await authService.getUserById(userId);
+      log('TAG: AuthRepositoryImpl: User fetched successfully for ID: $userId');
+      return Success(response.toDomain());
+    } catch (e) {
+      log('TAG: AuthRepositoryImpl: Error fetching user: $e');
       return Failure(e.toString());
     }
   }

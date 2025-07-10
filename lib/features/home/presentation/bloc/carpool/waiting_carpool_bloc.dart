@@ -187,6 +187,9 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
 
           // Emit event to change trip state to ongoing
           AppEventBus().emit(const TripStateChangeRequested(TripState.ongoingCarpool));
+
+          // Emit event to notify that carpool has started
+          AppEventBus().emit(CarpoolStartedSuccessfully(startedCarpool.id));
           break;
 
         case Failure<Carpool>():

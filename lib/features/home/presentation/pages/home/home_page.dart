@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
+import 'package:uniride_driver/features/home/presentation/bloc/carpool/on_going_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/home/home_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/pages/dialogs/passenger_request_dialog.dart';
 import 'package:uniride_driver/features/home/presentation/pages/map/map_page.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/create_carpool_panel.dart';
+import 'package:uniride_driver/features/home/presentation/pages/panels/ongoing_carpool_panel.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/waiting_carpool_panel.dart';
 
 import '../../../../../core/di/injection_container.dart' as di;
@@ -35,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   late MapBloc _mapBloc;
   late WaitingCarpoolBloc _waitingCarpoolBloc;
   late PassengerRequestBloc _passengerRequestBloc;
+  late OnGoingCarpoolBloc _onGoingCarpoolBloc;
 
   @override
   void initState() {
@@ -44,6 +47,7 @@ class _HomePageState extends State<HomePage> {
     _mapBloc = di.sl<MapBloc>();
     _waitingCarpoolBloc = di.sl<WaitingCarpoolBloc>();
     _passengerRequestBloc = di.sl<PassengerRequestBloc>();
+    _onGoingCarpoolBloc = di.sl<OnGoingCarpoolBloc>();
   }
 
   @override
@@ -53,6 +57,7 @@ class _HomePageState extends State<HomePage> {
     _waitingCarpoolBloc.close();
     _createCarpoolBloc.close();
     _passengerRequestBloc.close();
+    _onGoingCarpoolBloc.close();
     super.dispose();
   }
 
@@ -66,6 +71,7 @@ class _HomePageState extends State<HomePage> {
             BlocProvider.value(value: _homePageBloc),
             BlocProvider.value(value: _waitingCarpoolBloc),
             BlocProvider.value(value: _passengerRequestBloc),
+            BlocProvider.value(value: _onGoingCarpoolBloc),
           ],
         child: BlocBuilder<HomePageBloc, HomePageState>(
           builder: (context, homeState) {
@@ -174,7 +180,11 @@ class _HomePageState extends State<HomePage> {
           ],
         );
       case TripState.ongoingCarpool:
-        return Placeholder();
+        return Stack(
+          children: [
+            const OnGoingCarpoolPanel(),
+          ],
+        );
       case TripState.finishedCarpool:
         return Placeholder();
       case TripState.cancelledCarpool:
@@ -334,7 +344,7 @@ class _HomePageState extends State<HomePage> {
       case TripState.waitingToStartCarpool:
         return 500;
       case TripState.ongoingCarpool:
-        return 350;
+        return 450;
       case TripState.finishedCarpool:
         return 300;
       case TripState.cancelledCarpool:
