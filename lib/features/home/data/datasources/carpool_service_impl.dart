@@ -136,4 +136,33 @@ class CarpoolServiceImpl implements CarpoolService {
       throw Exception('Failed to finish carpool: $e');
     }
   }
+
+  @override
+  Future<CarpoolResponseModel> getActiveCarpoolByDriverId(String userId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/carpools/driver/$userId/active');
+
+      log('TAG: CarpoolService - GET active carpool by driver ID');
+      log('TAG: CarpoolService - URL: $uri');
+
+      final response = await client.get(
+        uri,
+        headers: {'Content-Type': 'application/json',},
+      );
+
+      log('TAG: CarpoolService - Response status: ${response.statusCode}');
+      log('TAG: CarpoolService - Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        return CarpoolResponseModel.fromJson(jsonResponse);
+      } else {
+        log('TAG: CarpoolServiceImpl: Error fetching active carpool by driver ID: ${response.body}');
+        throw Exception('Error fetching active carpool by driver ID: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('TAG: CarpoolServiceImpl: Exception fetching active carpool by driver ID: $e');
+      throw Exception('Failed to fetch active carpool by driver ID: $e');
+    }
+  }
 }

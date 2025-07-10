@@ -237,10 +237,15 @@ Future<void> init() async {
   );
 
   //! Bloc - Home Page
-  sl.registerFactory(() => HomePageBloc());
+  sl.registerFactory<HomePageBloc>(
+          () => HomePageBloc(
+            userRepository: sl<UserRepository>(),
+            carpoolRepository: sl<CarpoolRepository>(),
+          )
+  );
 
   //! Bloc - Map
-  sl.registerFactory(() => MapBloc());
+  sl.registerFactory<MapBloc>(() => MapBloc());
 
   //! Core - Already registered in existing init()
   if (!sl.isRegistered<http.Client>()) {
