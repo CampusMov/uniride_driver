@@ -52,6 +52,15 @@ class CarpoolCancelRequested extends AppEvent {
   List<Object?> get props => [carpoolId];
 }
 
+class CarpoolStartedSuccessfully extends AppEvent {
+  final String carpoolId;
+
+  const CarpoolStartedSuccessfully(this.carpoolId);
+
+  @override
+  List<Object?> get props => [carpoolId];
+}
+
 // Events related to Map Management
 class AddPolylineRequested extends AppEvent {
   final List<LatLng> coordinates;
