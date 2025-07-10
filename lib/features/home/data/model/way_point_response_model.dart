@@ -46,10 +46,10 @@ class WayPointResponseModel {
         longitude: locationLongitude ?? 0.0,
         latitude: locationLatitude ?? 0.0,
       ),
-      estimatedArrivalTime: estimatedArrivalTime != null
+      estimatedArrivalTime: estimatedArrivalTime != null && estimatedArrivalTime!.isNotEmpty
           ? DateTime.parse(estimatedArrivalTime!)
           : null,
-      realArrivalTime: realArrivalTime != null
+      realArrivalTime: realArrivalTime != null && realArrivalTime!.isNotEmpty
           ? DateTime.parse(realArrivalTime!)
           : null,
     );
