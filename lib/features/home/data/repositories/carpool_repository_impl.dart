@@ -109,4 +109,27 @@ class CarpoolRepositoryImpl implements CarpoolRepository {
       return Failure('An unexpected error occurred: ${e.toString()}');
     }
   }
+
+  @override
+  Future<Resource<Carpool>> getActiveCarpoolByDriverId(String userId) async {
+    try {
+      log('TAG: CarpoolRepository - Fetching active carpool for driver ID: $userId');
+
+      final carpoolResponse = await carpoolService.getActiveCarpoolByDriverId(userId);
+
+      final carpool = carpoolResponse.toDomain();
+
+      log('TAG: CarpoolRepository - Successfully fetched active carpool with ID: ${carpool.id}');
+      return Success(carpool);
+    } on SocketException {
+      log('TAG: CarpoolRepository - Network error while fetching active carpool');
+      return const Failure('No internet connection');
+    } on HttpException {
+      log('TAG: CarpoolRepository - HTTP error while fetching active carpool');
+      return const Failure('Server error occurred');
+    } catch (e) {
+      log('TAG: CarpoolRepository - Unexpected error while fetching active carpool: $e');
+      return Failure('An unexpected error occurred: ${e.toString()}');
+    }
+  }
 }

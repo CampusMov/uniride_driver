@@ -20,6 +20,14 @@ class GenerateRoute extends WaitingCarpoolEvent {
   const GenerateRoute();
 }
 
+class LoadRouteCarpool extends WaitingCarpoolEvent {
+  const LoadRouteCarpool();
+}
+
+class LoadWaypoints extends WaitingCarpoolEvent {
+  const LoadWaypoints();
+}
+
 class StartCarpool extends WaitingCarpoolEvent {
   const StartCarpool();
 }

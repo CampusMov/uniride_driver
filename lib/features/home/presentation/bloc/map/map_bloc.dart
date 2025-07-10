@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../../core/events/app_event_bus.dart';
 import '../../../../../core/events/app_events.dart';
+import '../../../domain/entities/map/marker_data.dart';
 import 'map_event.dart';
 import 'map_state.dart';
 
@@ -39,6 +40,17 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         color: event.color,
         width: event.width,
       ));
+    });
+
+    _eventBusSubscription = AppEventBus().on<WaypointsUpdated>().listen((event) {
+      add(ClearMarkers());
+      add(AddMarkers(event.waypoints.map((wp) => MarkerData(
+        id: wp.id,
+        position: LatLng(wp.location.latitude, wp.location.longitude),
+        title: wp.passengerId,
+        icon: BitmapDescriptor.defaultMarker,
+        onTap: () => {},
+      )).toList()));
     });
   }
 

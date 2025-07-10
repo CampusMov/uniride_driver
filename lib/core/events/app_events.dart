@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:equatable/equatable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
+import 'package:uniride_driver/features/home/domain/entities/way_point.dart';
 
 import '../../features/home/domain/entities/passenger_request.dart';
 
@@ -129,4 +130,18 @@ class PassengerRequestReceived extends AppEvent {
 
   @override
   List<Object?> get props => [passengerRequest];
+}
+
+class PassengerRequestAccepted extends AppEvent {
+  const PassengerRequestAccepted();
+}
+
+// Events related to Routes Carpool and Waypoints
+class WaypointsUpdated extends AppEvent {
+  final List<WayPoint> waypoints;
+
+  const WaypointsUpdated(this.waypoints);
+
+  @override
+  List<Object?> get props => [waypoints];
 }

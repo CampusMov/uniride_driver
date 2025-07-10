@@ -10,13 +10,16 @@ import 'package:uniride_driver/features/auth/domain/repositories/user_repository
 import 'package:uniride_driver/features/auth/domain/services/auth_service.dart';
 import 'package:uniride_driver/features/auth/domain/services/user_local_service.dart';
 import 'package:uniride_driver/features/home/data/datasources/carpool_service_impl.dart';
+import 'package:uniride_driver/features/home/data/datasources/way_point_service_impl.dart';
 import 'package:uniride_driver/features/home/data/repositories/carpool_repository_impl.dart';
 import 'package:uniride_driver/features/home/data/repositories/route_repository_impl.dart';
 import 'package:uniride_driver/features/home/domain/repositories/carpool_repository.dart';
 import 'package:uniride_driver/features/home/domain/repositories/route_carpool_repository.dart';
 import 'package:uniride_driver/features/home/domain/repositories/route_repository.dart';
+import 'package:uniride_driver/features/home/domain/repositories/way_point_repository.dart';
 import 'package:uniride_driver/features/home/domain/services/carpool_service.dart';
 import 'package:uniride_driver/features/home/domain/services/route_service.dart';
+import 'package:uniride_driver/features/home/domain/services/way_point_service.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_carpool_bloc.dart';
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/waiting_carpool_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
@@ -30,6 +33,7 @@ import '../../features/home/data/datasources/passenger_request_service_impl.dart
 import '../../features/home/data/datasources/route_carpool_repository_impl.dart';
 import '../../features/home/data/datasources/route_carpool_service_impl.dart';
 import '../../features/home/data/datasources/route_service_impl.dart';
+import '../../features/home/data/datasources/way_point_repository_impl.dart';
 import '../../features/home/data/repositories/location_repository.dart';
 import '../../features/home/data/repositories/passenger_request_repository_impl.dart';
 import '../../features/home/domain/repositories/passenger_request_repository.dart';
@@ -38,6 +42,7 @@ import '../../features/home/domain/services/route_carpool_service.dart';
 import '../../features/home/presentation/bloc/carpool/on_going_carpool_bloc.dart';
 import '../../features/home/presentation/bloc/home/home_bloc.dart';
 import '../../features/home/presentation/bloc/map/map_bloc.dart';
+import '../../features/home/presentation/bloc/menu/drawer_menu_bloc.dart';
 import '../../features/home/presentation/bloc/passenger-request/passenger_request_bloc.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
@@ -181,6 +186,8 @@ Future<void> init() async {
       () => WaitingCarpoolBloc(
         carpoolRepository: sl<CarpoolRepository>(),
         routeRepository: sl<RouteRepository>(),
+        routeCarpoolRepository: sl<RouteCarpoolRepository>(),
+        wayPointRepository: sl<WayPointRepository>(),
       )
   );
 
@@ -236,11 +243,36 @@ Future<void> init() async {
       )
   );
 
+  //! Features - Waypoints
+  sl.registerLazySingleton<WayPointRepository>(
+      () => WayPointRepositoryImpl(wayPointService: sl())
+  );
+
+  sl.registerLazySingleton<WayPointService>(
+      () => WayPointServiceImpl(
+        client: sl(),
+        baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
+      )
+  );
+
   //! Bloc - Home Page
-  sl.registerFactory(() => HomePageBloc());
+  sl.registerFactory<HomePageBloc>(
+          () => HomePageBloc(
+            userRepository: sl<UserRepository>(),
+            carpoolRepository: sl<CarpoolRepository>(),
+          )
+  );
+
+  //! Bloc - Drawer Menu
+  sl.registerFactory<DrawerMenuBloc>(
+      () => DrawerMenuBloc(
+        userRepository: sl<UserRepository>(),
+        profileRepository: sl<ProfileRepository>(),
+      )
+  );
 
   //! Bloc - Map
-  sl.registerFactory(() => MapBloc());
+  sl.registerFactory<MapBloc>(() => MapBloc());
 
   //! Core - Already registered in existing init()
   if (!sl.isRegistered<http.Client>()) {

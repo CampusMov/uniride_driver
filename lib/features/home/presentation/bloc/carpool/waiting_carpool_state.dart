@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../domain/entities/carpool.dart';
 import '../../../domain/entities/route.dart';
+import '../../../domain/entities/route_carpool.dart';
 
 class WaitingCarpoolState extends Equatable {
   final bool isLoadingCarpool;
@@ -10,6 +11,7 @@ class WaitingCarpoolState extends Equatable {
   final bool isStartingCarpool;
   final bool isCancellingCarpool;
   final Carpool? carpool;
+  final RouteCarpool? routeCarpool;
   final Route? route;
   final List<LatLng>? routeCoordinates;
   final String? errorMessage;
@@ -22,6 +24,7 @@ class WaitingCarpoolState extends Equatable {
     this.isStartingCarpool = false,
     this.isCancellingCarpool = false,
     this.carpool,
+    this.routeCarpool,
     this.route,
     this.routeCoordinates,
     this.errorMessage,
@@ -39,6 +42,7 @@ class WaitingCarpoolState extends Equatable {
     bool? isStartingCarpool,
     bool? isCancellingCarpool,
     Carpool? carpool,
+    RouteCarpool? routeCarpool,
     Route? route,
     List<LatLng>? routeCoordinates,
     String? errorMessage,
@@ -51,6 +55,7 @@ class WaitingCarpoolState extends Equatable {
       isStartingCarpool: isStartingCarpool ?? this.isStartingCarpool,
       isCancellingCarpool: isCancellingCarpool ?? this.isCancellingCarpool,
       carpool: carpool ?? this.carpool,
+      routeCarpool: routeCarpool ?? this.routeCarpool,
       route: route ?? this.route,
       routeCoordinates: routeCoordinates ?? this.routeCoordinates,
       errorMessage: errorMessage,
@@ -73,6 +78,7 @@ class WaitingCarpoolState extends Equatable {
     isStartingCarpool,
     isCancellingCarpool,
     carpool,
+    routeCarpool,
     route,
     routeCoordinates,
     errorMessage,

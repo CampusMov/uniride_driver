@@ -210,6 +210,8 @@ class PassengerRequestBloc extends Bloc<PassengerRequestEvent, PassengerRequestS
             successMessage: 'Solicitud aceptada exitosamente',
           ));
 
+          AppEventBus().emit(const PassengerRequestAccepted());
+
           break;
 
         case Failure<PassengerRequest>():
