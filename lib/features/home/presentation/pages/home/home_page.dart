@@ -12,11 +12,15 @@ import 'package:uniride_driver/features/home/presentation/pages/panels/ongoing_c
 import 'package:uniride_driver/features/home/presentation/pages/panels/waiting_carpool_panel.dart';
 
 import '../../../../../core/di/injection_container.dart' as di;
+import '../../../../../core/navigation/screens_routes.dart';
 import '../../bloc/carpool/waiting_carpool_bloc.dart';
 import '../../bloc/home/home_state.dart';
 import '../../bloc/map/map_bloc.dart';
 import '../../bloc/map/map_event.dart';
 import '../../bloc/map/map_state.dart';
+import '../../bloc/menu/drawer_menu_bloc.dart';
+import '../../bloc/menu/drawer_menu_event.dart';
+import '../../bloc/menu/drawer_menu_state.dart';
 import '../../bloc/passenger-request/passenger_request_bloc.dart';
 import '../../bloc/passenger-request/passenger_request_event.dart';
 import '../../bloc/passenger-request/passenger_request_state.dart';
@@ -39,6 +43,7 @@ class _HomePageState extends State<HomePage> {
   late WaitingCarpoolBloc _waitingCarpoolBloc;
   late PassengerRequestBloc _passengerRequestBloc;
   late OnGoingCarpoolBloc _onGoingCarpoolBloc;
+  late DrawerMenuBloc _drawerMenuBloc;
 
   @override
   void initState() {
@@ -49,6 +54,9 @@ class _HomePageState extends State<HomePage> {
     _waitingCarpoolBloc = di.sl<WaitingCarpoolBloc>();
     _passengerRequestBloc = di.sl<PassengerRequestBloc>();
     _onGoingCarpoolBloc = di.sl<OnGoingCarpoolBloc>();
+    _drawerMenuBloc = di.sl<DrawerMenuBloc>();
+
+    _drawerMenuBloc.add(const LoadUserProfile());
   }
 
   @override
@@ -59,204 +67,356 @@ class _HomePageState extends State<HomePage> {
     _createCarpoolBloc.close();
     _passengerRequestBloc.close();
     _onGoingCarpoolBloc.close();
+    _drawerMenuBloc.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: _buildDrawer(),
-      body: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: _mapBloc),
-            BlocProvider.value(value: _createCarpoolBloc),
-            BlocProvider.value(value: _homePageBloc),
-            BlocProvider.value(value: _waitingCarpoolBloc),
-            BlocProvider.value(value: _passengerRequestBloc),
-            BlocProvider.value(value: _onGoingCarpoolBloc),
-          ],
-        child: BlocBuilder<HomePageBloc, HomePageState>(
-          builder: (context, homeState) {
-            return Scaffold(
-              body: Stack(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<MapBloc>.value(value: _mapBloc),
+        BlocProvider<CreateCarpoolBloc>.value(value: _createCarpoolBloc),
+        BlocProvider<HomePageBloc>.value(value: _homePageBloc),
+        BlocProvider<WaitingCarpoolBloc>.value(value: _waitingCarpoolBloc),
+        BlocProvider<PassengerRequestBloc>.value(value: _passengerRequestBloc),
+        BlocProvider<OnGoingCarpoolBloc>.value(value: _onGoingCarpoolBloc),
+        BlocProvider<DrawerMenuBloc>.value(value: _drawerMenuBloc),
+      ],
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            key: _scaffoldKey,
+            drawer: _buildDrawer(),
+            body: MultiBlocListener(
+              listeners: [
+                BlocListener<DrawerMenuBloc, DrawerMenuState>(
+                  listener: (context, state) {
+                    if (state.status == DrawerMenuStatus.loggedOut) {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        ScreensRoutes.enterVerificationCode,
+                            (route) => false,
+                      );
+                    }
+                  },
+                ),
+              ],
+              child: BlocBuilder<HomePageBloc, HomePageState>(
+                builder: (context, homeState) {
+                  final tripState = homeState.currentTripState;
+                  return Stack(
+                    children: [
+                      _buildSlidingPanel(tripState),
+                      _buildMenuButton(),
+                      _buildActionButtons(tripState),
+                      _buildOriginLocationDialog(tripState),
+                      _buildClassScheduleDialog(tripState),
+                      _buildPassengerRequestDialog(tripState),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+/*
+  * Builds the side drawer menu
+  */
+  Widget _buildDrawer() {
+    return BlocBuilder<DrawerMenuBloc, DrawerMenuState>(
+      builder: (context, drawerState) {
+        return Drawer(
+          backgroundColor: Colors.black,
+          child: Column(
+            children: [
+
+              _buildDrawerHeader(drawerState),
+
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildDrawerItem(
+                      icon: Icons.directions_car,
+                      title: 'Mis carpools',
+                      subtitle: 'Revisa todos los carpools que has realizado a mayor detalle',
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.access_time,
+                      title: 'Mi tiempo',
+                      subtitle: 'Revisa el tiempo que has logrado ahorrarte',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navegar a mi tiempo
+                      },
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.warning_outlined,
+                      title: 'Incidencias',
+                      subtitle: 'Administra y ten cuidado con las faltas que cometes.',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navegar a incidencias
+                      },
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.location_on_outlined,
+                      title: 'Ubicaciones guardadas',
+                      subtitle: 'Administra tus ubicaciones más recurrentes y favoritas.',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navegar a ubicaciones guardadas
+                      },
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.notifications_outlined,
+                      title: 'Notificaciones',
+                      subtitle: 'Administra y revisa las notificación de UniRide',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navegar a notificaciones
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Botón de cerrar sesión
+              _buildLogoutButton(drawerState),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /*
+  * Builds the drawer header with user information
+  */
+  Widget _buildDrawerHeader(DrawerMenuState drawerState) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 60, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (drawerState.status == DrawerMenuStatus.loading)
+            const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          else if (drawerState.status == DrawerMenuStatus.loaded &&
+              drawerState.profile != null)
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey,
+                  backgroundImage: drawerState.profile!.profilePictureUrl.isNotEmpty
+                      ? NetworkImage(drawerState.profile!.profilePictureUrl)
+                      : null,
+                  child: drawerState.profile!.profilePictureUrl.isEmpty
+                      ? const Icon(
+                    Icons.person,
+                    size: 35,
+                    color: Colors.white,
+                  )
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        drawerState.profile!.firstName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        drawerState.profile!.lastName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            color: Colors.yellow,
+                            size: 16,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            '2.6',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          else if (drawerState.status == DrawerMenuStatus.error)
+              Column(
                 children: [
-                  _buildSlidingPanel(homeState.currentTripState),
-                  _buildMenuButton(),
-                  _buildActionButtons(homeState.currentTripState),
-                  _buildOriginLocationDialog(homeState.currentTripState),
-                  _buildClassScheduleDialog(homeState.currentTripState),
-                  _buildPassengerRequestDialog(homeState.currentTripState),
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 50,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Error cargando perfil',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: () {
+                      context.read<DrawerMenuBloc>().add(const LoadUserProfile());
+                    },
+                    child: const Text(
+                      'Reintentar',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ],
+              )
+            else
+              const Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.grey,
+                    child: Icon(
+                      Icons.person,
+                      size: 35,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cargando...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            );
-          },
-        ),
+
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              // Acción para editar perfil
+            },
+            child: const Text(
+              'Editar mi perfil >',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   /*
-  * Builds the side drawer menu
+  * Builds the logout button
   */
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: Colors.black,
-      child: Column(
-        children: [
-          // Header del drawer
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 60, 16, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.grey,
-                      child: Icon(
-                        Icons.person,
-                        size: 35,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'El Pepe',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          'Rodriguez',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.yellow,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              '2.6',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () {
-                    // Acción para editar perfil
-                  },
-                  child: const Text(
-                    'Editar mi perfil >',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildLogoutButton(DrawerMenuState drawerState) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: ListTile(
+        leading: drawerState.status == DrawerMenuStatus.loggingOut
+            ? const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
           ),
-
-          // Opciones del menú
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildDrawerItem(
-                  icon: Icons.directions_car,
-                  title: 'Mis carpools',
-                  subtitle: 'Revisa todos los carpools que has realizado a mayor detalle',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navegar a mis carpools
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.access_time,
-                  title: 'Mi tiempo',
-                  subtitle: 'Revisa el tiempo que has logrado ahorrarte',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navegar a mi tiempo
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.warning_outlined,
-                  title: 'Incidencias',
-                  subtitle: 'Administra y ten cuidado con las faltas que cometes.',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navegar a incidencias
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.location_on_outlined,
-                  title: 'Ubicaciones guardadas',
-                  subtitle: 'Administra tus ubicaciones más recurrentes y favoritas.',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navegar a ubicaciones guardadas
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.notifications_outlined,
-                  title: 'Notificaciones',
-                  subtitle: 'Administra y revisa las notificación de UniRide',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navegar a notificaciones
-                  },
-                ),
-              ],
-            ),
+        )
+            : const Icon(
+          Icons.logout,
+          color: Colors.red,
+        ),
+        title: Text(
+          drawerState.status == DrawerMenuStatus.loggingOut
+              ? 'Cerrando sesión...'
+              : 'Cerrar sesión',
+          style: const TextStyle(
+            color: Colors.red,
+            fontSize: 16,
           ),
-
-          // Botón de cerrar sesión
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: Colors.red,
-              ),
-              title: const Text(
-                'Cerrar sesión',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 16,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                // Lógica para cerrar sesión
-              },
-            ),
-          ),
-        ],
+        ),
+        onTap: drawerState.status == DrawerMenuStatus.loggingOut
+            ? null
+            : () {
+          Navigator.pop(context);
+          _showLogoutConfirmationDialog();
+        },
       ),
+    );
+  }
+
+  void _showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar cierre de sesión'),
+          content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.read<DrawerMenuBloc>().add(const LogoutUser());
+              },
+              child: const Text(
+                'Cerrar sesión',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

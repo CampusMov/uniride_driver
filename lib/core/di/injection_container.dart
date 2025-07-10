@@ -42,6 +42,7 @@ import '../../features/home/domain/services/route_carpool_service.dart';
 import '../../features/home/presentation/bloc/carpool/on_going_carpool_bloc.dart';
 import '../../features/home/presentation/bloc/home/home_bloc.dart';
 import '../../features/home/presentation/bloc/map/map_bloc.dart';
+import '../../features/home/presentation/bloc/menu/drawer_menu_bloc.dart';
 import '../../features/home/presentation/bloc/passenger-request/passenger_request_bloc.dart';
 import '../../features/profile/data/datasource/profile_class_schedule_service_impl.dart';
 import '../../features/profile/data/datasource/profile_service_impl.dart';
@@ -260,6 +261,14 @@ Future<void> init() async {
             userRepository: sl<UserRepository>(),
             carpoolRepository: sl<CarpoolRepository>(),
           )
+  );
+
+  //! Bloc - Drawer Menu
+  sl.registerFactory<DrawerMenuBloc>(
+      () => DrawerMenuBloc(
+        userRepository: sl<UserRepository>(),
+        profileRepository: sl<ProfileRepository>(),
+      )
   );
 
   //! Bloc - Map
