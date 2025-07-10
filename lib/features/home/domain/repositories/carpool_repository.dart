@@ -7,4 +7,5 @@ abstract class CarpoolRepository {
   Future<Resource<Carpool>> createCarpool(Carpool request);
   Future<Resource<Carpool>> getCarpoolById(String carpoolId);
   Future<Resource<Carpool>> startCarpool(String carpoolId, Location request);
+  Future<Resource<Carpool>> finishCarpool(String carpoolId);
 }

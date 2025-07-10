@@ -12,6 +12,8 @@ import 'package:uniride_driver/features/home/domain/repositories/route_carpool_r
 import 'package:uniride_driver/features/shared/domain/entities/location.dart';
 import 'package:uniride_driver/core/utils/resource.dart';
 
+import '../../../domain/entities/carpool.dart';
+import '../../../domain/entities/routing-matching/enum_trip_state.dart';
 import 'on_going_carpool_event.dart';
 import 'on_going_carpool_state.dart';
 
@@ -303,23 +305,48 @@ class OnGoingCarpoolBloc extends Bloc<OnGoingCarpoolEvent, OnGoingCarpoolState> 
   }
 
   Future<void> _onFinishCarpool(FinishCarpool event, Emitter<OnGoingCarpoolState> emit) async {
-    log('TAG: OnGoingCarpoolBloc - Finishing carpool');
+    if (state.carpool == null) {
+      log('TAG: OnGoingCarpoolBloc - No carpool to finish');
+      emit(state.copyWith(errorMessage: 'No hay carpool para finalizar'));
+      return;
+    }
 
     emit(state.copyWith(isFinishingCarpool: true));
 
     add(const StopLocationTracking());
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      log('TAG: OnGoingCarpoolBloc - Finishing carpool with ID: ${state.carpool!.id}');
 
+      final result = await carpoolRepository.finishCarpool(state.carpool!.id);
+      switch (result) {
+        case Success<Carpool>():
+          final carpool = result.data;
+
+          log('TAG: OnGoingCarpoolBloc - Carpool finished successfully');
+          emit(state.copyWith(
+            isFinishingCarpool: false,
+            carpool: carpool,
+            successMessage: 'Carpool finalizado exitosamente',
+          ));
+
+          // Emit event to change state in the app
+          AppEventBus().emit(const TripStateChangeRequested(TripState.finishedCarpool));
+          break;
+
+        case Failure<Carpool>():
+          log('TAG: OnGoingCarpoolBloc - Error finishing carpool: ${result.message}');
+          emit(state.copyWith(
+            isFinishingCarpool: false,
+            errorMessage: 'Error al finalizar carpool: ${result.message}',
+          ));
+          break;
+
+        case Loading<Carpool>():
+          log('TAG: OnGoingCarpoolBloc - Already finishing carpool');
+          break;
+      }
       _currentRouteId = null;
-
-      emit(state.copyWith(
-        isFinishingCarpool: false,
-        successMessage: 'Carpool finalizado exitosamente',
-      ));
-
-      log('TAG: OnGoingCarpoolBloc - Carpool finished successfully');
     } catch (e) {
       log('TAG: OnGoingCarpoolBloc - Error finishing carpool: $e');
       emit(state.copyWith(
@@ -338,7 +365,7 @@ class OnGoingCarpoolBloc extends Bloc<OnGoingCarpoolEvent, OnGoingCarpoolState> 
     if (hours > 0) {
       return '${hours}h ${minutes}min';
     } else {
-      return '${minutes} min';
+      return '$minutes min';
     }
   }
 

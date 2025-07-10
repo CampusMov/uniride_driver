@@ -344,7 +344,7 @@ class _HomePageState extends State<HomePage> {
       case TripState.waitingToStartCarpool:
         return 500;
       case TripState.ongoingCarpool:
-        return 350;
+        return 450;
       case TripState.finishedCarpool:
         return 300;
       case TripState.cancelledCarpool:

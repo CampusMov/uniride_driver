@@ -107,4 +107,33 @@ class CarpoolServiceImpl implements CarpoolService {
       throw Exception('Failed to start carpool: $e');
     }
   }
+
+  @override
+  Future<CarpoolResponseModel> finishCarpool(String carpoolId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/carpools/$carpoolId/finish');
+
+      log('TAG: CarpoolService - POST finish carpool');
+      log('TAG: CarpoolService - URL: $uri');
+
+      final response = await client.post(
+        uri,
+        headers: {'Content-Type': 'application/json',},
+      );
+
+      log('TAG: CarpoolService - Response status: ${response.statusCode}');
+      log('TAG: CarpoolService - Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        return Future.value(CarpoolResponseModel.fromJson(jsonResponse));
+      } else {
+        log('TAG: CarpoolServiceImpl: Error finishing carpool: ${response.body}');
+        throw Exception('Error finishing carpool: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('TAG: CarpoolServiceImpl: Exception finishing carpool: $e');
+      throw Exception('Failed to finish carpool: $e');
+    }
+  }
 }
