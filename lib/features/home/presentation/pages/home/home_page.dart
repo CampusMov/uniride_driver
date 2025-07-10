@@ -32,6 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final PanelController _panelController = PanelController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late CreateCarpoolBloc _createCarpoolBloc;
   late HomePageBloc _homePageBloc;
   late MapBloc _mapBloc;
@@ -64,6 +65,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: _buildDrawer(),
       body: MultiBlocProvider(
           providers: [
             BlocProvider.value(value: _mapBloc),
@@ -79,6 +82,7 @@ class _HomePageState extends State<HomePage> {
               body: Stack(
                 children: [
                   _buildSlidingPanel(homeState.currentTripState),
+                  _buildMenuButton(),
                   _buildActionButtons(homeState.currentTripState),
                   _buildOriginLocationDialog(homeState.currentTripState),
                   _buildClassScheduleDialog(homeState.currentTripState),
@@ -87,6 +91,247 @@ class _HomePageState extends State<HomePage> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  /*
+  * Builds the side drawer menu
+  */
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: Colors.black,
+      child: Column(
+        children: [
+          // Header del drawer
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 60, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.grey,
+                      child: Icon(
+                        Icons.person,
+                        size: 35,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'El Pepe',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text(
+                          'Rodriguez',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.yellow,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              '2.6',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () {
+                    // Acción para editar perfil
+                  },
+                  child: const Text(
+                    'Editar mi perfil >',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Opciones del menú
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildDrawerItem(
+                  icon: Icons.directions_car,
+                  title: 'Mis carpools',
+                  subtitle: 'Revisa todos los carpools que has realizado a mayor detalle',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navegar a mis carpools
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.access_time,
+                  title: 'Mi tiempo',
+                  subtitle: 'Revisa el tiempo que has logrado ahorrarte',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navegar a mi tiempo
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.warning_outlined,
+                  title: 'Incidencias',
+                  subtitle: 'Administra y ten cuidado con las faltas que cometes.',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navegar a incidencias
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.location_on_outlined,
+                  title: 'Ubicaciones guardadas',
+                  subtitle: 'Administra tus ubicaciones más recurrentes y favoritas.',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navegar a ubicaciones guardadas
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notificaciones',
+                  subtitle: 'Administra y revisa las notificación de UniRide',
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navegar a notificaciones
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Botón de cerrar sesión
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: ListTile(
+              leading: const Icon(
+                Icons.logout,
+                color: Colors.red,
+              ),
+              title: const Text(
+                'Cerrar sesión',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 16,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                // Lógica para cerrar sesión
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /*
+  * Builds a drawer menu item
+  */
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: Colors.white,
+          size: 24,
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  /*
+  * Builds the menu button in the top left corner
+  */
+  Widget _buildMenuButton() {
+    return Positioned(
+      top: 50,
+      left: 16,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              child: const Icon(
+                Icons.menu,
+                color: Colors.black,
+                size: 24,
+              ),
+            ),
+          ),
         ),
       ),
     );
