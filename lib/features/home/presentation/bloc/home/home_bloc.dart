@@ -34,7 +34,12 @@ class HomePageBloc extends Bloc<HomePageEvent, HomePageState> {
 
   void _onTripStateChanged(TripStateChanged event, Emitter<HomePageState> emit) {
     log('TAG: HomePageBloc: Trip state changed to: ${event.tripState}');
-    emit(state.copyWith(currentTripState: event.tripState));
+    if (event.tripState == TripState.finishedCarpool) {
+      log('TAG: HomePageBloc - Emitting FinishedCarpoolBloc event');
+      emit(state.copyWith(currentTripState: TripState.creatingCarpool));
+    } else {
+      emit(state.copyWith(currentTripState: event.tripState));
+    }
   }
 
   Future<void> _onInitializeHomePage(InitializeHomePage event, Emitter<HomePageState> emit) async {

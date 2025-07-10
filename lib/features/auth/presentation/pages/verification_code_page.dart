@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uniride_driver/core/navigation/screens_routes.dart';
+import 'package:uniride_driver/features/auth/domain/entities/user_status.dart';
 
 import '../../../../core/di/injection_container.dart' as di;
 import '../../../shared/utils/widgets/default_rounded_text_button.dart';
@@ -78,7 +80,13 @@ class _VerificationCodeViewState extends State<_VerificationCodeView> {
     return BlocListener<VerificationCodeBloc, VerificationCodeState>(
       listener: (context, state) {
         if (state.isVerificationSuccess) {
-          Navigator.of(context).pushReplacementNamed(ScreensRoutes.registerProfileFullName);
+          if (state.user?.status.value == UserStatus.active.value) {
+            log("TAG: VerificationCodePage - User is active, navigating to search carpool");
+            Navigator.of(context).pushReplacementNamed(ScreensRoutes.searchCarpool);
+          } else {
+            Navigator.of(context).pushReplacementNamed(ScreensRoutes.registerProfileFullName);
+            log("TAG: VerificationCodePage - User is not active, navigating to register profile full name");
+          }
         }
       },
       child: Scaffold(

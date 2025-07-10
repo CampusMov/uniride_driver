@@ -7,13 +7,17 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uniride_driver/features/home/domain/entities/carpool.dart';
 import 'package:uniride_driver/features/home/domain/entities/route.dart';
+import 'package:uniride_driver/features/home/domain/entities/way_point.dart';
+import 'package:uniride_driver/features/home/domain/repositories/way_point_repository.dart';
 import 'package:uniride_driver/features/shared/domain/entities/location.dart';
 
 import '../../../../../core/events/app_event_bus.dart';
 import '../../../../../core/events/app_events.dart';
 import '../../../../../core/utils/resource.dart';
+import '../../../domain/entities/route_carpool.dart';
 import '../../../domain/entities/routing-matching/enum_trip_state.dart';
 import '../../../domain/repositories/carpool_repository.dart';
+import '../../../domain/repositories/route_carpool_repository.dart';
 import '../../../domain/repositories/route_repository.dart';
 import 'waiting_carpool_event.dart';
 import 'waiting_carpool_state.dart';
@@ -21,13 +25,19 @@ import 'waiting_carpool_state.dart';
 class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> {
   final CarpoolRepository carpoolRepository;
   final RouteRepository routeRepository;
+  final RouteCarpoolRepository routeCarpoolRepository;
+  final WayPointRepository wayPointRepository;
   late StreamSubscription _eventBusSubscription;
 
   WaitingCarpoolBloc({
     required this.carpoolRepository,
     required this.routeRepository,
+    required this.routeCarpoolRepository,
+    required this.wayPointRepository,
   }) : super(const WaitingCarpoolState()) {
     on<LoadCarpool>(_onLoadCarpool);
+    on<LoadRouteCarpool>(_onLoadRouteCarpool);
+    on<LoadWaypoints>(_onLoadWayPoints);
     on<GenerateRoute>(_onGenerateRoute);
     on<StartCarpool>(_onStartCarpool);
     on<CancelCarpool>(_onCancelCarpool);
@@ -38,6 +48,11 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
 
     _eventBusSubscription = AppEventBus().on<CarpoolCreatedSuccessfully>().listen((event) {
       add(LoadCarpool(event.carpoolId));
+    });
+
+    _eventBusSubscription = AppEventBus().on<PassengerRequestAccepted>().listen((event) {
+      log('TAG: WaitingCarpoolBloc - Load all waypoints');
+      add(const LoadWaypoints());
     });
   }
 
@@ -59,6 +74,9 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
             carpool: carpool,
             successMessage: 'Carpool cargado exitosamente',
           ));
+
+          // Automatically load route carpool after loading carpool
+          add(const LoadRouteCarpool());
 
           // Automatically generate route after loading carpool
           add(const GenerateRoute());
@@ -146,6 +164,98 @@ class WaitingCarpoolBloc extends Bloc<WaitingCarpoolEvent, WaitingCarpoolState> 
       emit(state.copyWith(
         isLoadingRoute: false,
         errorMessage: 'Error inesperado al generar ruta: ${e.toString()}',
+      ));
+    }
+  }
+
+  void _onLoadRouteCarpool(LoadRouteCarpool event, Emitter<WaitingCarpoolState> emit) async {
+    if (state.carpool == null) {
+      emit(state.copyWith(errorMessage: 'No hay carpool cargado para obtener ruta'));
+      return;
+    }
+
+    try {
+      log('TAG: WaitingCarpoolBloc - Loading route carpool with carpool ID: ${state.carpool!.id}');
+
+      final result = await routeCarpoolRepository.getRouteByCarpoolId(state.carpool!.id);
+      switch (result) {
+        case Success<RouteCarpool>():
+          final routeCarpool = result.data;
+          log('TAG: WaitingCarpoolBloc - Route carpool loaded successfully: $routeCarpool');
+
+          emit(state.copyWith(
+            routeCarpool: routeCarpool,
+            successMessage: 'Ruta de carpool cargada exitosamente',
+          ));
+
+          // Automatically load waypoints after loading route carpool
+          add(const LoadWaypoints());
+
+          break;
+
+        case Failure<RouteCarpool>():
+          log('TAG: WaitingCarpoolBloc - Failed to load route carpool: ${result.message}');
+
+          emit(state.copyWith(
+            routeCarpool: null,
+            errorMessage: 'Error al cargar ruta de carpool: ${result.message}',
+          ));
+          break;
+
+        case Loading<dynamic>():
+          log('TAG: WaitingCarpoolBloc - Already loading route carpool');
+          break;
+      }
+    } catch (e) {
+      log('TAG: WaitingCarpoolBloc - Error loading route carpool: $e');
+      emit(state.copyWith(
+        errorMessage: 'Error inesperado al cargar ruta de carpool: ${e.toString()}',
+      ));
+    }
+  }
+
+  void _onLoadWayPoints(LoadWaypoints event, Emitter<WaitingCarpoolState> emit) async {
+    if (state.routeCarpool == null) {
+      emit(state.copyWith(errorMessage: 'No hay ruta de carpool cargada para obtener waypoints'));
+      return;
+    }
+
+    try {
+      log('TAG: WaitingCarpoolBloc - Loading waypoints for route carpool ID: ${state.routeCarpool!.id}');
+
+      final result = await wayPointRepository.getWayPointsByRouteId(state.routeCarpool!.id);
+      switch (result) {
+        case Success<List<WayPoint>>():
+          final waypoints = result.data;
+          log('TAG: WaitingCarpoolBloc - Waypoints loaded successfully: ${waypoints.length} waypoints');
+
+          final updatedRouteCarpool = state.routeCarpool!.setWayPoints(waypoints);
+
+          emit(state.copyWith(
+            routeCarpool: updatedRouteCarpool,
+            successMessage: 'Waypoints cargados exitosamente',
+          ));
+
+          // Emit event to update route carpool with new waypoints
+          AppEventBus().emit(WaypointsUpdated(state.routeCarpool!.wayPoints));
+
+          break;
+
+        case Failure<List<WayPoint>>():
+          log('TAG: WaitingCarpoolBloc - Failed to load waypoints: ${result.message}');
+          emit(state.copyWith(
+            errorMessage: 'Error al cargar waypoints: ${result.message}',
+          ));
+          break;
+
+        case Loading<List<WayPoint>>():
+          log('TAG: WaitingCarpoolBloc - Already loading waypoints');
+          break;
+      }
+    } catch (e) {
+      log('TAG: WaitingCarpoolBloc - Error loading waypoints: $e');
+      emit(state.copyWith(
+        errorMessage: 'Error inesperado al cargar waypoints: ${e.toString()}',
       ));
     }
   }
