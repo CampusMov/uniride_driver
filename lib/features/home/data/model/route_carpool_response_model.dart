@@ -69,10 +69,10 @@ class RouteCarpoolResponseModel {
     return RouteCarpool(
       id: id ?? '',
       carpoolId: carpoolId ?? '',
-      realStartedTime: realStartedTime != null
+      realStartedTime: realStartedTime != null && realStartedTime!.isNotEmpty
           ? DateTime.parse(realStartedTime!)
           : null,
-      estimatedEndedTime: estimatedEndedTime != null
+      estimatedEndedTime: estimatedEndedTime != null && realStartedTime!.isNotEmpty
           ? DateTime.parse(estimatedEndedTime!)
           : null,
       estimatedDurationMinutes: estimatedDurationMinutes ?? 0.0,
