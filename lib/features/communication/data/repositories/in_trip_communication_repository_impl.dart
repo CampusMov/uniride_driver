@@ -15,44 +15,7 @@ class InTripCommunicationRepositoryImpl implements InTripCommunicationRepository
   InTripCommunicationRepositoryImpl({required this.inTripCommunicationService});
 
   @override
-  Future<Resource<Chat>> createChat({
-    required String carpoolId,
-    required String driverId,
-    required String passengerId,
-  }) async {
-    try {
-      final result = await inTripCommunicationService.createChat(
-        CreateChatRequestModel(
-          carpoolId: carpoolId,
-          driverId: driverId,
-          passengerId: passengerId,
-        ),
-      );
-      log('TAG: InTripCommunicationRepositoryImpl: Chat created successfully for carpool: $carpoolId');
-      return Success(result.toDomain());
-    } catch (e) {
-      log('TAG: InTripCommunicationRepositoryImpl: Error creating chat: $e');
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Resource<void>> closeChat({required String chatId}) async {
-    try {
-      await inTripCommunicationService.closeChat(chatId);
-      log('TAG: InTripCommunicationRepositoryImpl: Chat closed successfully: $chatId');
-      return const Success(null);
-    } catch (e) {
-      log('TAG: InTripCommunicationRepositoryImpl: Error closing chat: $e');
-      return Failure(e.toString());
-    }
-  }
-
-  @override
-  Future<Resource<Chat>> getPassengerChat({
-    required String passengerId,
-    required String carpoolId,
-  }) async {
+  Future<Resource<Chat>> getPassengerChat({required String passengerId, required String carpoolId}) async {
     try {
       final result = await inTripCommunicationService.getPassengerChat(passengerId, carpoolId);
       log('TAG: InTripCommunicationRepositoryImpl: Passenger chat fetched successfully for passenger: $passengerId');
@@ -90,11 +53,7 @@ class InTripCommunicationRepositoryImpl implements InTripCommunicationRepository
   }
 
   @override
-  Future<Resource<Message>> sendMessage({
-    required String chatId,
-    required String senderId,
-    required String content,
-  }) async {
+  Future<Resource<Message>> sendMessage({required String chatId, required String senderId, required String content}) async {
     try {
       final result = await inTripCommunicationService.sendMessage(
         chatId,
@@ -113,11 +72,7 @@ class InTripCommunicationRepositoryImpl implements InTripCommunicationRepository
   }
 
   @override
-  Future<Resource<void>> markMessageAsRead({
-    required String chatId,
-    required String messageId,
-    required String readerId,
-  }) async {
+  Future<Resource<void>> markMessageAsRead({required String chatId, required String messageId, required String readerId}) async {
     try {
       final nowIso = DateTime.now().toUtc().toIso8601String();
       await inTripCommunicationService.markMessageAsRead(

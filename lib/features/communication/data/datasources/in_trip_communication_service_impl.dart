@@ -18,24 +18,6 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
   });
 
   @override
-  Future<ChatResponseModel> createChat(CreateChatRequestModel request) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats');
-
-    final response = await client.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(request.toJson()),
-    );
-
-    if (response.statusCode == 200) {
-      return ChatResponseModel.fromJson(jsonDecode(response.body));
-    } else {
-      log('TAG: InTripCommunicationServiceImpl: Error creating chat: ${response.body}');
-      throw Exception('Error creating chat: ${response.body}');
-    }
-  }
-
-  @override
   Future<void> closeChat(String chatId) async {
     final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/$chatId/close');
 

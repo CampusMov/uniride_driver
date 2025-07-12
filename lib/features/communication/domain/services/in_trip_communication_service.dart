@@ -5,7 +5,6 @@ import '../../data/models/message_response_model.dart';
 import '../../data/models/send_message_request_model.dart';
 
 abstract class InTripCommunicationService {
-  Future<ChatResponseModel> createChat(CreateChatRequestModel request);
   Future<void> closeChat(String chatId);
   Future<ChatResponseModel> getPassengerChat(String passengerId, String carpoolId);
   Future<List<ChatResponseModel>> getDriverChats(String driverId);
