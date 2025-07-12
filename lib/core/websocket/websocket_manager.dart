@@ -259,11 +259,11 @@ class WebSocketManager {
       serviceName: ApiConstants.inTripCommunicationServiceName,
       topic: '/topic/chats/$chatId',
       subscriptionKey: 'chat_$chatId',
-      onMessage: (data) => _handleChatMessageReceived(data),
+      onMessage: (data) => _handleChatMessageReceived(data, chatId),
     );
   }
 
-  void _handleChatMessageReceived(Map<String, dynamic> data) {
+  void _handleChatMessageReceived(Map<String, dynamic> data, String chatId) {
     try {
       log('TAG: WebSocketManager - Handling chat message received');
       final message = MessageResponseModel.fromJson(data).toDomain();
@@ -273,7 +273,7 @@ class WebSocketManager {
       log('TAG: WebSocketManager - Connection status after processing: $currentStatus');
 
       // Emit chat message event
-      AppEventBus().emit(ChatMessageReceived(message));
+      AppEventBus().emit(ChatMessageReceived(message, chatId: chatId));
       log('TAG: WebSocketManager - Chat message event emitted successfully');
     } catch (e) {
       log('TAG: WebSocketManager - Error handling chat message: $e');
@@ -297,6 +297,12 @@ class WebSocketManager {
       log('TAG: WebSocketManager - Error sending message to chat $chatId: $e');
       rethrow;
     }
+  }
+
+  void unsubscribeFromChatMessages(String chatId) {
+    final subscriptionKey = 'chat_$chatId';
+    unsubscribeFromTopic(ApiConstants.inTripCommunicationServiceName, subscriptionKey);
+    log('TAG: WebSocketManager - Unsubscribed from chat messages: $chatId');
   }
 
   // ========== CALLBACKS AND HANDLERS ==========

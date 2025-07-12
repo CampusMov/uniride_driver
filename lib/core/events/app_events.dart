@@ -140,11 +140,12 @@ class PassengerRequestAccepted extends AppEvent {
 // Events related to In-Trip Communication
 class ChatMessageReceived extends AppEvent {
   final Message message;
+  final String? chatId;
 
-  const ChatMessageReceived(this.message);
+  const ChatMessageReceived(this.message, {this.chatId});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, chatId];
 }
 
 // Events related to Routes Carpool and Waypoints
