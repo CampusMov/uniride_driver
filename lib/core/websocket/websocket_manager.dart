@@ -4,6 +4,8 @@ import 'dart:developer';
 
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:uniride_driver/core/constants/api_constants.dart';
+import 'package:uniride_driver/features/communication/data/models/message_response_model.dart';
+import 'package:uniride_driver/features/communication/data/models/send_message_request_model.dart';
 
 import '../events/app_event_bus.dart';
 import '../../features/home/data/model/passenger_request_response_model.dart';
@@ -248,6 +250,52 @@ class WebSocketManager {
       log('TAG: WebSocketManager - Event emitted successfully');
     } catch (e) {
       log('TAG: WebSocketManager - Error handling passenger request update: $e');
+    }
+  }
+
+  /// IN-TRIP COMMUNICATION SERVICE - Subscribe to chat messages
+  void subscribeToChatMessages(String chatId) {
+    subscribeToTopic(
+      serviceName: ApiConstants.inTripCommunicationServiceName,
+      topic: '/topic/chats/$chatId',
+      subscriptionKey: 'chat_$chatId',
+      onMessage: (data) => _handleChatMessageReceived(data),
+    );
+  }
+
+  void _handleChatMessageReceived(Map<String, dynamic> data) {
+    try {
+      log('TAG: WebSocketManager - Handling chat message received');
+      final message = MessageResponseModel.fromJson(data).toDomain();
+
+      final serviceName = ApiConstants.inTripCommunicationServiceName;
+      final currentStatus = _connectionStatuses[serviceName];
+      log('TAG: WebSocketManager - Connection status after processing: $currentStatus');
+
+      // Emit chat message event
+      AppEventBus().emit(ChatMessageReceived(message));
+      log('TAG: WebSocketManager - Chat message event emitted successfully');
+    } catch (e) {
+      log('TAG: WebSocketManager - Error handling chat message: $e');
+    }
+  }
+
+  Future<void> sendMessageChat({required String chatId, required String senderId, required String content}) async {
+    try {
+      log('TAG: WebSocketManager - Attempting to send message to chat: $chatId');
+
+      final payload = SendMessageRequestModel(chatId: chatId, senderId: senderId, content: content).toJson();
+
+      await sendMessage(
+        serviceName: ApiConstants.inTripCommunicationServiceName,
+        destination: '/app/chat/$chatId/send',
+        payload: payload,
+      );
+
+      log('TAG: WebSocketManager - Message sent successfully to chat: $chatId from sender: $senderId');
+    } catch (e) {
+      log('TAG: WebSocketManager - Error sending message to chat $chatId: $e');
+      rethrow;
     }
   }
 
