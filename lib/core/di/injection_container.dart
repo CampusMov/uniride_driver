@@ -24,6 +24,11 @@ import 'package:uniride_driver/features/home/presentation/bloc/carpool/create_ca
 import 'package:uniride_driver/features/home/presentation/bloc/carpool/waiting_carpool_bloc.dart';
 import 'package:uniride_driver/features/profile/presentantion/bloc/register_profile_bloc.dart';
 
+import '../../features/communication/data/datasources/in_trip_communication_service_impl.dart';
+import '../../features/communication/data/repositories/in_trip_communication_repository_impl.dart';
+import '../../features/communication/domain/repositories/in_trip_communication_repository.dart';
+import '../../features/communication/domain/services/in_trip_communication_service.dart';
+import '../../features/communication/presentation/bloc/chat_bloc.dart';
 import '../../features/file/data/datasources/file_management_service_impl.dart';
 import '../../features/file/data/repositories/file_management_repository_impl.dart';
 import '../../features/file/domain/repositories/file_management_repository.dart';
@@ -253,6 +258,27 @@ Future<void> init() async {
         client: sl(),
         baseUrl: '${ApiConstants.baseUrl}${ApiConstants.routingMatchingServiceName}',
       )
+  );
+
+  //! Features - In-Trip Communication
+  sl.registerLazySingleton<InTripCommunicationService>(
+        () => InTripCommunicationServiceImpl(
+      client: sl(),
+      baseUrl: '${ApiConstants.baseUrl}${ApiConstants.inTripCommunicationServiceName}',
+    ),
+  );
+
+  sl.registerLazySingleton<InTripCommunicationRepository>(
+        () => InTripCommunicationRepositoryImpl(
+      inTripCommunicationService: sl(),
+    ),
+  );
+
+  sl.registerFactory<ChatBloc>(
+        () => ChatBloc(
+      repository: sl(),
+      userRepository: sl(),
+    ),
   );
 
   //! Bloc - Home Page
