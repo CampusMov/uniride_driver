@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../communication/presentation/pages/dialogs/chat_dialog.dart';
 import '../../../domain/entities/enum_passenger_request_status.dart';
 import '../../../domain/entities/passenger_request.dart';
 import '../../bloc/passenger-request/passenger_request_bloc.dart';
@@ -601,9 +602,38 @@ class _PassengerRequestDialogState extends State<PassengerRequestDialog> {
                         ),
                       ),
 
-                      // Indicador de expansión y processing
+                      // Chat button for accepted requests + Expansion indicator
                       Column(
                         children: [
+                          // Chat button (only for accepted requests)
+                          if (request.status == PassengerRequestStatus.accepted) ...[
+                            GestureDetector(
+                              onTap: () {
+                                ChatDialog.show(
+                                  context,
+                                  passengerId: request.passengerId,
+                                  carpoolId: request.carpoolId,
+                                  passengerName: request.pickupLocation.name, // or get actual passenger name
+                                );
+                              },
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.chat_bubble,
+                                  color: Colors.blue,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+
+                          // Expansion indicator and processing
                           if (isProcessing)
                             const SizedBox(
                               width: 20,

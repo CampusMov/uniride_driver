@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -11,8 +13,11 @@ import 'package:uniride_driver/features/home/presentation/pages/panels/create_ca
 import 'package:uniride_driver/features/home/presentation/pages/panels/ongoing_carpool_panel.dart';
 import 'package:uniride_driver/features/home/presentation/pages/panels/waiting_carpool_panel.dart';
 
+import '../../../../../core/constants/api_constants.dart';
 import '../../../../../core/di/injection_container.dart' as di;
 import '../../../../../core/navigation/screens_routes.dart';
+import '../../../../../core/websocket/websocket_manager.dart';
+import '../../../../communication/presentation/bloc/chat_bloc.dart';
 import '../../bloc/carpool/waiting_carpool_bloc.dart';
 import '../../bloc/home/home_state.dart';
 import '../../bloc/map/map_bloc.dart';
@@ -44,6 +49,7 @@ class _HomePageState extends State<HomePage> {
   late PassengerRequestBloc _passengerRequestBloc;
   late OnGoingCarpoolBloc _onGoingCarpoolBloc;
   late DrawerMenuBloc _drawerMenuBloc;
+  late ChatBloc _chatBloc;
 
   @override
   void initState() {
@@ -55,8 +61,10 @@ class _HomePageState extends State<HomePage> {
     _passengerRequestBloc = di.sl<PassengerRequestBloc>();
     _onGoingCarpoolBloc = di.sl<OnGoingCarpoolBloc>();
     _drawerMenuBloc = di.sl<DrawerMenuBloc>();
+    _chatBloc = di.sl<ChatBloc>();
 
     _drawerMenuBloc.add(const LoadUserProfile());
+    _connectWebSocketForCommunication();
   }
 
   @override
@@ -68,6 +76,7 @@ class _HomePageState extends State<HomePage> {
     _passengerRequestBloc.close();
     _onGoingCarpoolBloc.close();
     _drawerMenuBloc.close();
+    _chatBloc.close();
     super.dispose();
   }
 
@@ -82,6 +91,7 @@ class _HomePageState extends State<HomePage> {
         BlocProvider<PassengerRequestBloc>.value(value: _passengerRequestBloc),
         BlocProvider<OnGoingCarpoolBloc>.value(value: _onGoingCarpoolBloc),
         BlocProvider<DrawerMenuBloc>.value(value: _drawerMenuBloc),
+        BlocProvider<ChatBloc>.value(value: _chatBloc),
       ],
       child: Builder(
         builder: (context) {
@@ -762,5 +772,17 @@ class _HomePageState extends State<HomePage> {
    */
   double _getMaxHeight() {
     return MediaQuery.of(context).size.height * 0.5;
+  }
+
+  Future<void> _connectWebSocketForCommunication() async {
+    try {
+      await WebSocketManager().connectToService(
+        serviceName: ApiConstants.inTripCommunicationServiceName,
+        wsUrl: '${ApiConstants.webSocketUrl}${ApiConstants.inTripCommunicationServiceName}/ws',
+      );
+      log('TAG: HomePage: Connected to communication WebSocket service');
+    } catch (e) {
+      log('TAG: HomePage: Error connecting to communication WebSocket: $e');
+    }
   }
 }
