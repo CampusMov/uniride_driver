@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:equatable/equatable.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:uniride_driver/features/communication/domain/entities/message.dart';
 import 'package:uniride_driver/features/home/domain/entities/routing-matching/enum_trip_state.dart';
 import 'package:uniride_driver/features/home/domain/entities/way_point.dart';
 
@@ -134,6 +135,17 @@ class PassengerRequestReceived extends AppEvent {
 
 class PassengerRequestAccepted extends AppEvent {
   const PassengerRequestAccepted();
+}
+
+// Events related to In-Trip Communication
+class ChatMessageReceived extends AppEvent {
+  final Message message;
+  final String? chatId;
+
+  const ChatMessageReceived(this.message, {this.chatId});
+
+  @override
+  List<Object?> get props => [message, chatId];
 }
 
 // Events related to Routes Carpool and Waypoints
