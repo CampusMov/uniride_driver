@@ -19,7 +19,7 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
 
   @override
   Future<void> closeChat(String chatId) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/$chatId/close');
+    final uri = Uri.parse('$baseUrl/chats/$chatId/close');
 
     final response = await client.post(uri);
 
@@ -31,7 +31,7 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
 
   @override
   Future<ChatResponseModel> getPassengerChat(String passengerId, String carpoolId) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/passenger/$passengerId/ride/$carpoolId');
+    final uri = Uri.parse('$baseUrl/chats/passenger/$passengerId/ride/$carpoolId');
 
     final response = await client.get(uri);
 
@@ -45,7 +45,7 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
 
   @override
   Future<List<ChatResponseModel>> getDriverChats(String driverId) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/driver/$driverId');
+    final uri = Uri.parse('$baseUrl/chats/driver/$driverId');
 
     final response = await client.get(uri);
 
@@ -60,7 +60,7 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
 
   @override
   Future<List<MessageResponseModel>> getMessages(String chatId) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/$chatId/messages');
+    final uri = Uri.parse('$baseUrl/chats/$chatId/messages');
 
     final response = await client.get(uri);
 
@@ -75,7 +75,7 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
 
   @override
   Future<MessageResponseModel> sendMessage(String chatId, SendMessageRequestModel request) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/$chatId/messages');
+    final uri = Uri.parse('$baseUrl/chats/$chatId/messages');
 
     final response = await client.post(
       uri,
@@ -93,7 +93,7 @@ class InTripCommunicationServiceImpl implements InTripCommunicationService {
 
   @override
   Future<void> markMessageAsRead(String chatId, String messageId, MarkMessageReadRequestModel request) async {
-    final uri = Uri.parse('$baseUrl/in-trip-communication-service/chats/$chatId/messages/$messageId/read');
+    final uri = Uri.parse('$baseUrl/chats/$chatId/messages/$messageId/read');
 
     final response = await client.post(
       uri,
